@@ -1,30 +1,25 @@
-##########################################
-# Submitter for DQMIO conversion scripts #
-##########################################
-# This script wraps conversion scripts (harvest_nanodqmio_to_*.py) in a job.
-# Run "python harvest_nanodqmio_submit.py -h" for a list of available options.
+####################################################################################
+# A script for reading (nano)DQMIO files and storing a ME in a parquet file format #
+####################################################################################
+# Run "python harvest_nanodqmio_to_parquet.py -h" for a list of available options.
+#
+# Very similar to harvest_nanodqmio_to_csv.py,
+# but store the dataframe as a parquet file instead of a csv file.
 
 ### imports
 import sys
 import os
+import json
+import numpy as np
 import argparse
-sys.path.append('../jobsubmission')
-import condortools as ct
 sys.path.append('src')
+from DQMIOReader import DQMIOReader
 import tools
 
 if __name__=='__main__':
 
   # read arguments
   parser = argparse.ArgumentParser(description='Harvest nanoDQMIO to CSV')
-  parser.add_argument('--harvester', default='harvest_nanodqmio_to_csv.py',
-                        help='Harvester to run, should be a valid python script' 
-                             +' similar in structure and command line args to'
-                             +' e.g. harvest_nanodqmio_to_csv.py.')
-  parser.add_argument('--runmode', choices=['condor','local'], default='condor',
-                        help='Choose from "condor" or "local";'
-                             +' in case of "condor", will submit job to condor cluster;'
-                             +' in case of "local", will run interactively in the terminal.')
   parser.add_argument('--filemode', choices=['das','local'], default='das',
                         help='Choose from "das" or "local";'
                               +' in case of "das", will read all files'
@@ -42,7 +37,7 @@ if __name__=='__main__':
   parser.add_argument('--redirector', default='root://cms-xrd-global.cern.ch/',
                         help='Redirector used to access remote files'
                              +' (ignored in filemode "local").')
-  parser.add_argument('--mename', default='PixelPhase1/Tracks/PXBarrel/chargeInner_PXLayer_2',
+  parser.add_argument('--mename', default='PixelPhase1/Tracks/PXBarrel/chargeInner_PXLayer_1',
                         help='Name of the monitoring element to store.')
   parser.add_argument('--outputfile', default='test.csv',
                         help='Path to output file.')
@@ -54,8 +49,6 @@ if __name__=='__main__':
   parser.add_argument('--istest', default=False, action='store_true',
                         help='If set to true, only one file will be read for speed')
   args = parser.parse_args()
-  harvester = args.harvester
-  runmode = args.runmode
   filemode = args.filemode
   datasetname = args.datasetname
   redirector = args.redirector
@@ -65,7 +58,7 @@ if __name__=='__main__':
   istest = args.istest
 
   # export the proxy
-  if( filemode=='das' or runmode=='condor' ): tools.export_proxy( proxy )
+  if filemode=='das': tools.export_proxy( proxy )
 
   # make a list of input files
   inputfiles = tools.format_input_files( datasetname,
@@ -73,22 +66,24 @@ if __name__=='__main__':
                                          redirector=redirector,
                                          istest=istest )
 
-  # format the list of input files
-  inputfstr = ','.join(inputfiles)
-  if len(inputfiles)==1: inputfstr+=','
- 
-  # make the command
-  cmd = 'python {}'.format(harvester)
-  cmd += ' --filemode {}'.format(filemode)
-  cmd += ' --datasetname {}'.format(inputfstr)
-  cmd += ' --redirector {}'.format(redirector)
-  cmd += ' --mename {}'.format(mename)
-  cmd += ' --outputfile {}'.format(outputfile)
-  cmd += ' --proxy {}'.format(proxy)
-  if istest: cmd += ' --istest'
+  # print configuration parameters
+  print('running with following parameters:')
+  print('input files:')
+  for inputfile in inputfiles: print('  - {}'.format(inputfile))
+  print('monitoring element: {}'.format(mename))
+  print('outputfile: {}'.format(outputfile))
 
-  if runmode=='local':
-    os.system(cmd)
-  if runmode=='condor':
-    ct.submitCommandAsCondorJob('cjob_harvest_nanodqmio_submit', cmd, 
-            proxy=proxy, jobflavour='workday')
+  # make a DQMIOReader instance and initialize it with the DAS files
+  print('initializing DQMIOReader...')
+  sys.stdout.flush()
+  sys.stderr.flush()
+  reader = DQMIOReader(*inputfiles, sortindex=True)
+  print('initialized DQMIOReader with following properties')
+  print('number of lumisections: {}'.format(len(reader.listLumis())))
+  print('number of monitoring elements per lumisection: {}'.format(len(reader.listMEs())))
+
+  # select the monitoring element and make a pandas dataframe
+  df = reader.getSingleMEsToDataFrame(mename)
+  
+  # write to a csv file
+  df.to_parquet(outputfile)

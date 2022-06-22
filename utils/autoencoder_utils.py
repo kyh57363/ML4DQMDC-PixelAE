@@ -93,7 +93,8 @@ def chiSquaredTopNRaw(y_true, y_pred, n=10):
     # output:
     # numpy array of shape (nhists)
     sqdiff = np.power(y_true-y_pred,2)
-    chi2 = np.where(y_true==0,0,sqdiff/y_true)
+    y_true_safe = np.where(y_true==0, 1, y_true)
+    chi2 = np.where(y_true==0, 0, sqdiff/y_true_safe)
     if len(chi2.shape)==3:
         chi2 = chi2.reshape(len(chi2),-1)
     chi2 = np.partition( chi2, -n, axis=-1 )[:,-n:]
@@ -394,16 +395,22 @@ def train_simple_autoencoder(hists, nepochs=-1, modelname='',
 
 ### replacing scores of +-inf with sensible value
 
-def clip_scores( scores ):
+def clip_scores( scores, margin=1., hard_thresholds=None ):
     ### clip +-inf values in scores
     # +inf values in scores will be replaced by the maximum value (exclucing +inf) plus one
     # -inf values in scores will be replaced by the minimim value (exclucing -inf) minus one
     # input arguments:
     # - scores: 1D numpy array
+    # - margin: margin between maximum value (excluding inf) and where to put inf.
+    # - hard_thresholds: tuple of values for -inf, +inf (in case the min or max cannot be determined)
     # returns
     # - array with same length as scores with elements replaced as explained above
-    maxnoninf = np.max(np.where(scores==np.inf,np.min(scores),scores)) + 1
-    minnoninf = np.min(np.where(scores==-np.inf,np.max(scores),scores)) -1
+    maxnoninf = np.max(np.where(scores==np.inf,np.min(scores),scores)) + margin
+    minnoninf = np.min(np.where(scores==-np.inf,np.max(scores),scores)) - margin
+    if( hard_thresholds is not None and hard_thresholds[1] is not None ):
+        maxnoninf = hard_thresholds[1]
+    if( hard_thresholds is not None and hard_thresholds[0] is not None ):
+        minnoninf = hard_thresholds[0]
     if np.max(scores)>maxnoninf: 
         scores = np.where(scores==np.inf,maxnoninf,scores)
         print('NOTE: scores of +inf were reset to {}'.format(maxnoninf))
