@@ -1,0 +1,120 @@
+### imports
+
+# external modules
+import os
+import sys
+import pickle
+import zipfile
+import glob
+import shutil
+import copy
+import math
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import importlib
+
+# local modules
+sys.path.append('classifiers')
+from HistogramClassifier import HistogramClassifier
+sys.path.append('../utils')
+import dataframe_utils as dfu
+import hist_utils as hu
+import json_utils as jsonu
+import plot_utils as pu
+from autoencoder_utils import mseTop10Raw, mseTop10
+import HistStruct
+importlib.reload(HistStruct)
+
+
+class SubHistStruct( HistStruct.HistStruct ):
+    """ A class to extend the HistStruct class and implement functionality for a histogram substructure """
+    
+    
+    def __init__( self ):
+        """An empty initializer, setting all containers to empty defaults.
+        A HistStruct object has the following properties:
+        histlist: a list of histograms containing the substructure as a set of sublists (ie. [[hist1, hist2], [hist3, hist4, hist5]]"""
+        
+        super().__init__()
+        histlist = []
+        
+    def __str__( self ):
+        """Prints the current SubHistStruct into a list"""
+        
+        info = super().__str__()
+        info += ('\n' + str(histlist))
+        return info
+    
+    def reset_histlist( self, histlist ):
+        """Resets the histlist to preserve histograms but change substructure. Note this requires eliminating all stored classifiers and scores
+        input arguments:
+             histlist: the new histlist to define the histogram substructure (see class docs)"""
+        
+        self.globalscores = []
+        self.classifiers = {}
+        self.scores = {}
+        self.extscores = {}
+        self.extglobalscores = {}
+        print('WARNING: Classifiers cleared to preserve consistency')
+        
+        self.histlist = histlist
+   
+    def evaluate_classifier( self, histgroup, extname=None ):
+        """Evaluate a histogram classifier for a given histogram group in the SubHistStruct.
+        input arguments:
+          - histgroup: A group of 1+ histograms on which the desired autoencoder was trained
+          - extname: name of a set of extra histograms (see add_exthistograms)
+                    if None, will evaluate the classifer for the main set of histograms
+        notes:
+         - the result is both returned and stored in the 'scores' attribute"""
+        
+        ## Watch dogs
+        
+        if not histgroup in self.histlist:
+            raise Exception('ERROR in SubHistStruct.evaluate_classifier: requested histogram list does not exist in the current histlist')
+        
+        # 0th index used as the "name" of the classifier by convention
+        if not histgroup[0] in self.classifiers.keys():
+                raise Exception('ERROR in HistStruct.evaluate_classifier: requested to evaluate classifier for {}'.format(histname)
+                           +' but no classifier was set for this histogram name.')    
+        
+        # Case of not using extra histograms beyond the traditional dataset
+        if extname is None:
+            histograms = []
+            for histname in histgroup:
+                
+                # Kind of redundant in most cases, but makes sure all histograms exist
+                if histname not in self.histnames:
+                    raise Exception('ERROR in HistStruct.evaluate_classifier: requested histogram name {}'.format(histname)
+                                +' but this is not present in the current HistStruct.')
+                
+            # Convert training data into form usable by the autoencoder
+            X_eval = np.array([hu.normalize(self.get_histograms(
+                histname = hname, masknames = None), 
+                                                 norm="l1", axis=1) 
+                                       for hname in histgroup]).transpose((1,0,2))
+                
+            # Perform evaluation on histograms
+            predictions = np.array(self.classifiers[histgroup[0]].model.predict([X_eval[:,i] for i in range(X_eval.shape[1])]))
+            
+            # Data exists in a format incompatible with MSETop10Raw function and must be adapted
+            hists_eval = []
+            for i in range(len(histgroup)):
+                ls_eval = []
+                for ls in X_eval:
+                    ls_eval.append(ls[i])
+                hists_eval.append(ls_eval)
+            
+            # Evaluate data for each individual histogram to treat them seperately
+            from autoencoder_utils import mseTop10Raw, mseTop10
+            scoreslist = []
+            for i in range(len(histgroup)):
+                data = np.array(hists_eval[i])
+                preds = predictions[i]
+                                
+                scores = mseTop10Raw( data, preds )
+                self.scores[histgroup[i]] = scores
+                scoreslist.append(scores)
+            
+            return scoreslist

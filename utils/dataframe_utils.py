@@ -15,6 +15,7 @@ import os
 import pandas as pd
 import numpy as np
 import json
+from sklearn.preprocessing import StandardScaler
 import importlib
 
 # local modules
@@ -198,3 +199,46 @@ def get_hist_values(df):
     ls = ls.astype(int)
     runs = runs.astype(int)
     return (vals,runs,ls)
+    
+
+def merge_ls(df):
+    ### A function to stitch histograms end to end for a 1D autoencoder by merging lumisections
+    
+    # Determine the number of histograms present in the file by comparing data at each lumisection
+    numhistos = 0
+    lumi = df.get('fromlumi').get(0)
+    for i in range(len(df.get('hname'))):
+        if df.get('fromlumi').get(i) == lumi: numhistos = numhistos+1
+        else: break
+    list1 = []
+    
+    # Get a name of the first histogram so there's some reference
+    histogram = df.get('hname').get(0)
+    print('Assigning name: ' + histogram)
+    
+    # Iterate across the runs of the histograms
+    for i in range(0, int((get_hist_values(df)[0].shape[0]-1)), numhistos):
+        listof = []
+        entries = 0
+        histo = ""
+        Xbins = 0
+        
+        # Complete the merge for each histogram type
+        for j in range(0,numhistos,1):
+            entries = entries + df['entries'][i+j]  
+            length = len(df['histo'][j+i])
+            Xbins = Xbins + df['Xbins'][j+i]   
+            if (j == 0):
+                histo = histo + (df['histo'][j+i])[0:length-1]
+            elif (j == numhistos-1):
+                histo = histo + ', ' + (df['histo'][j+i])[1:length]
+            else:
+                histo = histo + ', ' + (df['histo'][j+i])[1:length-1]
+        
+        # Update the dataframe
+        listof = [df['fromrun'][i], df['fromlumi'][i], histogram, df['fromrun.1'][i], df['fromlumi.1'][i], df['metype'][i], histogram, histo, entries, df['Xmax'][i], df['Xmin'][i], Xbins + 2*(numhistos-1) , df['Ymax'][i], 1, 1]
+        list1.append(listof)
+    newDF = pd.DataFrame(list1, columns = [ 'fromrun', 'fromlumi', 'hname', 'fromrun.1', 'fromlumi.1','metype', 'hname.1', 'histo', 'entries', 'Xmax', 'Xmin', 'Xbins', 'Ymax', 'Ymin', 'Ybins'])    
+    return newDF
+
+
