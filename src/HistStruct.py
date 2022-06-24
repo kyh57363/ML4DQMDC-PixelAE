@@ -210,7 +210,7 @@ class HistStruct(object):
         
     def add_dataframe( self, df, cropslices=None, rebinningfactor=None, 
                         smoothinghalfwindow=None, smoothingweights=None,
-                        donormalize=True ):
+                        donormalize=True, standardbincount = 0):
         ### add a dataframe to a HistStruct
         # input arguments:
         # - df: a pandas dataframe as read from the input csv files
@@ -219,6 +219,7 @@ class HistStruct(object):
         # - smoothinghalfwindow: half window (int for 1D, tuple for 2D) for doing smoothing of histograms
         # - smoothingweights: weight array (1D for 1D, 2D for 2D) for smoothing of histograms
         # - donormalize: boolean whether to normalize the histograms
+        # - standardbincount: creates padded arrays for histograms with different bin counts to standardize for model training. 0 is default, which does not do any padding (normal HistStruct behavior)
         # for more details on cropslices, rebinningfactor, smoothingwindow, smoothingweights
         # and donormalize: see hist_utils.py!
         # notes:
@@ -231,7 +232,7 @@ class HistStruct(object):
         
         histnames = dfu.get_histnames(df)
         # loop over all names in the dataframe
-        for histname in histnames:
+        for i, histname in enumerate(histnames):
             if histname in self.histnames:
                 raise Exception('ERROR in HistStruct.add_dataframe: dataframe contains histogram name '.format(histname)
                                +' but this is already present in the current HistStruct.')
@@ -248,6 +249,28 @@ class HistStruct(object):
                                                 smoothinghalfwindow=smoothinghalfwindow,
                                                 smoothingweights=smoothingweights,
                                                 donormalize=donormalize)
+            
+            # Get the length of the histograms and make sure they are all consistent for this type
+            histlen = 0
+            for i, hist in enumerate(hists_all):
+                if i == 0:
+                    histlen = len(hist)
+                else:
+                    if histlen != len(hist):
+                        raise Exception('ERROR in HistStruct.add_dataframe: histogram bin counts are not self-consistent!')
+            
+            # Make sure the standardbincount is valid if it is defined
+            if histlen > standardbincount and standardbincount > 0:
+                raise Exception('ERROR in HistStruct.add_dataframe: standardbincount must be greater than or equal to largest histogram bin count')
+            # Pad any histograms with too few bins
+            if histlen < standardbincount:
+                newHistList = np.zeros((len(hists_all), standardbincount))
+                for i, hist in enumerate(hists_all):
+                    for j, value in enumerate(hist):
+                        newHistList[i][j] = value
+            
+                hists_all = newHistList
+            
             runnbs_all = runnbs_all.astype(int)
             lsnbs_all = lsnbs_all.astype(int)
             # check consistency in run and lumisection numbers
