@@ -199,6 +199,37 @@ def get_hist_values(df):
     ls = ls.astype(int)
     runs = runs.astype(int)
     return (vals,runs,ls)
+
+def rm_duplicates(df):
+    ### Function to correct histograms with duplicate run/histogram counts. Per instruction, this function selects the last duplicate histogram in an ordered list (so the second if there are two of the same run/lumi in a row)
+    dim = 1
+    if 'Ybins' in df.keys():
+        if df.at[0,'Ybins']>1: 
+            dim=2
+            raise Exception('More than 1D histograms not currently supported!')
+    
+    list1 = []
+    for i in range(len(df)):
+        hist = np.array(json.loads(df.at[i,'histo']))
+        
+        ls = int(df.at[i,'fromlumi'])
+        run = int(df.at[i, 'fromrun'])
+        
+        # Don't overrun the dataframe
+        if i < len(df) - 1: 
+            nextHist = hist = np.array(json.loads(df.at[i + 1,'histo']))
+            nextls = int(df.at[i + 1,'fromlumi'])
+            nextrun = int(df.at[i + 1, 'fromrun'])
+            
+            # If the run/lumi numbers are the same, we can skip it and add this histogram in a later iteration
+            if (nextls == ls and nextrun == run):
+                continue
+        
+        # If checks pass, add this run/lumi to the new dataframe
+        listof = [df['fromrun'][i], df['fromlumi'][i], df['hname'][i], df['fromrun.1'][i], df['fromlumi.1'][i], df['metype'][i], df['hname'][i], df['histo'][i], df['entries'][i], df['Xmax'][i], df['Xmin'][i], df['Xbins'][i], df['Ymax'][i], 1, 1]
+        list1.append(listof)
+    newDF = pd.DataFrame(list1, columns = [ 'fromrun', 'fromlumi', 'hname', 'fromrun.1', 'fromlumi.1','metype', 'hname.1', 'histo', 'entries', 'Xmax', 'Xmin', 'Xbins', 'Ymax', 'Ymin', 'Ybins'])  
+    return newDF
     
 
 def merge_ls(df):

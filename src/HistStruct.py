@@ -273,6 +273,7 @@ class HistStruct(object):
             
             runnbs_all = runnbs_all.astype(int)
             lsnbs_all = lsnbs_all.astype(int)
+            
             # check consistency in run and lumisection numbers
             if len(self.histnames)!=0:
                 if( not ( (runnbs_all==self.runnbs).all() and (lsnbs_all==self.lsnbs).all() ) ):
