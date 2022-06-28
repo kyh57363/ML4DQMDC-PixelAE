@@ -38,27 +38,23 @@ class SubHistStruct( HistStruct.HistStruct ):
         
         super().__init__()
         histlist = []
-        
-    def __str__( self ):
-        """Prints the current SubHistStruct into a list"""
-        
-        info = super().__str__()
-        info += ('\n' + str(histlist))
-        return info
     
-    def reset_histlist( self, histlist ):
+    def reset_histlist( self, histlist, suppress=False ):
         """Resets the histlist to preserve histograms but change substructure. Note this requires eliminating all stored classifiers and scores
         input arguments:
-             histlist: the new histlist to define the histogram substructure (see class docs)"""
+             histlist: the new histlist to define the histogram substructure (see class docs)
+             suppress: Boolean allowing user to suppress warnings"""
         
         self.globalscores = []
         self.classifiers = {}
         self.scores = {}
         self.extscores = {}
         self.extglobalscores = {}
-        print('WARNING: Classifiers cleared to preserve consistency')
+        self.masks = {}
+        if not suppress:print('WARNING: Classifiers and masks cleared to preserve consistency')
         
         self.histlist = histlist
+        return self.histlist
    
     def evaluate_classifier( self, histgroup, extname=None ):
         """Evaluate a histogram classifier for a given histogram group in the SubHistStruct.
@@ -117,4 +113,5 @@ class SubHistStruct( HistStruct.HistStruct ):
                 self.scores[histgroup[i]] = scores
                 scoreslist.append(scores)
             
-            return scoreslist
+            return scoreslistz
+        

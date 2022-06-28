@@ -70,6 +70,7 @@ class HistStruct(object):
         # exthistograms: dict of dicts similar to histograms for additional (e.g. artificially generated) histograms
         # extscores: dict of dicts similar to scores for additional (e.g. artificially generated) histograms
         # extglobalscores: dict of lists similar to scores for additional (e.g. artificially generated) histograms
+        # histlengths: dict of the length of each histogram for maksing
         self.histnames = []
         self.histograms = {}
         self.nentries = {}
@@ -83,6 +84,7 @@ class HistStruct(object):
         self.exthistograms = {}
         self.extscores = {}
         self.extglobalscores = {}
+        self.histlengths = {}
         
     def __str__( self ):
         ### get a printable representation of a HistStruct
@@ -527,6 +529,7 @@ class HistStruct(object):
         # - entries_to_bins_ratio: number of entries divided by number of bins, lower boundary for statistics
         # others: see add_stat_mask
         self.add_stat_mask( name, histnames=histnames, min_entries_to_bins_ratio=entries_to_bins_ratio )
+        
         
     def get_combined_mask( self, names ):
         ### get a combined mask given multiple mask names
