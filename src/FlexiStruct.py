@@ -28,7 +28,7 @@ importlib.reload(HistStruct)
 
 
 class FlexiStruct( HistStruct.HistStruct ):
-    """ A class to extend the HistStruct class and implement functionality for a histogram substructure """
+    """ A class to extend the HistStruct class and implement a more flexible, workable design for advanced testing. """
     
     
     def __init__( self ):
@@ -116,7 +116,7 @@ class FlexiStruct( HistStruct.HistStruct ):
             return scoreslist
         
     def get_scores( self, histname=None, masknames=None ):
-        ### get the array of scores for a given histogram type, optionally after masking
+        """ get the array of scores for a given histogram type, optionally after masking
         # input arguments:
         # - histname: name of the histogram type for which to retrieve the score. 
         #   if None, return a dict matching histnames to arrays of scores
@@ -124,7 +124,7 @@ class FlexiStruct( HistStruct.HistStruct ):
         # notes:
         # - this method takes the scores from the HistStruct.scores attribute;
         #   make sure to have evaluated the classifiers before calling this method,
-        #   else an exception will be thrown.
+        #   else an exception will be thrown."""
         histnames = self.histnames[:]
         if histname is not None:
             # check if histname is valid
@@ -146,8 +146,8 @@ class FlexiStruct( HistStruct.HistStruct ):
         return res[histname]
         
     def get_scores_array( self, masknames=None ):
-        ### similar to get_scores, but with different return type:
-        # np array of shape (nhistograms, nhistogramtypes)
+        """### similar to get_scores, but with different return type:
+        # np array of shape (nhistograms, nhistogramtypes)"""
         scores = self.get_scores( masknames=masknames )
         scores_array = []
         for histgroup in self.histlist:
