@@ -1,0 +1,2 @@
+/tmp/ipykernel_333022/1002144978.py:8: RuntimeWarning: divide by zero encountered in log
+  logprob_bad_parts = [np.log(fitfunc.pdf(mse_bad_eval[j])) for j in range(len(mse_bad_eval))]
