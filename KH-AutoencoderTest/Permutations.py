@@ -29,6 +29,13 @@ from tensorflow.keras.layers import Input, Dense, Concatenate
 from tensorflow.keras.models import Model, Sequential, load_model
 import importlib
 
+# Necessary to keep GPU usage to a minimum
+from tensorflow.compat.v1 import ConfigProto
+from tensorflow.compat.v1 import InteractiveSession
+config = ConfigProto()
+config.gpu_options.allow_growth = True
+session = InteractiveSession(config=config)
+
 # local modules
 sys.path.append('../utils')
 import csv_utils as csvu
