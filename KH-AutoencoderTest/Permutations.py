@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[39]:
+# In[97]:
 
 
 ### imports
 
 # external modules
 import os
+import gc
 from os.path import exists
 import os.path
 import pandas as pd
@@ -64,13 +65,8 @@ importlib.reload(SeminormalFitter)
 importlib.reload(GaussianKdeFitter)
 importlib.reload(HyperRectangleFitter)
 
-# If this doesn't fix the OOM error, I'm gonna cry
-from tensorflow.compat.v1 import ConfigProto
-from tensorflow.compat.v1 import InteractiveSession
-config = ConfigProto()
-config.gpu_options.allow_growth = True
-session = InteractiveSession(config=config)
-# In[2]:
+
+# In[74]:
 
 
 year = '2017'
@@ -79,7 +75,7 @@ era = 'B'
 datadir = '../data/' + year + era + '/'
 
 
-# In[3]:
+# In[75]:
 
 
 blk1Vars = ['chargeInner', 'chargeOuter', 'adc', 'size']
@@ -100,7 +96,7 @@ miscVars = [
 ]
 
 
-# In[4]:
+# In[76]:
 
 
 ### Get the different permutations for block 1
@@ -145,7 +141,7 @@ for size in range(1, len(blk1Vars) + 1):
         combosBlk1.append(subList)
 
 
-# In[5]:
+# In[77]:
 
 
 ### Permutations for block 2
@@ -210,7 +206,7 @@ for size in range(1, len(blk2Vars) + 1):
         combosBlk2.append(subList)
 
 
-# In[6]:
+# In[78]:
 
 
 ### Permutations for block 3
@@ -234,7 +230,7 @@ for size in range(1, len(blk3Vars) + 1):
         combosBlk3.append([subList])
 
 
-# In[7]:
+# In[79]:
 
 
 ### Permutations for block 4
@@ -255,7 +251,7 @@ for size in range(0, len(miscVars) + 1):
         combosBlk4.append(subList)
 
 
-# In[8]:
+# In[80]:
 
 
 ### Parsing combinations to create histlists
@@ -300,7 +296,7 @@ print('\nTraining Sets: ' + str(len(histlists)))
 print()
 
 
-# In[9]:
+# In[81]:
 
 
 ### Data Controls and Selection - 1D Autoncoder
@@ -620,7 +616,7 @@ badrunsls = {'2017B':
 histnames = histlists[255]
 
 
-# In[10]:
+# In[82]:
 
 
 ### Define Run Properties - Combined Autoencoder
@@ -630,7 +626,7 @@ histnames = histlists[255]
 save = False
 
 
-# In[11]:
+# In[83]:
 
 
 ### Model Controls and Selection - 1D Autoencoder
@@ -648,7 +644,7 @@ fmBiasFactor = 2
 wpBiasFactor = 20
 
 
-# In[12]:
+# In[84]:
 
 
 # train on a user-defined subset of runs
@@ -661,15 +657,17 @@ runsls_bad = badrunsls[year + era]
 runsls_good = goodrunsls[year + era]
 
 
-# In[13]:
+# In[85]:
 
 
 # Initializations
 dloader = DataLoader.DataLoader()
 histstruct = FlexiStruct.FlexiStruct()
 histstruct.reset_histlist(histnames)
-
+failedruns = {}
+failedls ={}
 # Unpack histnames and add every histogram individually
+consistent = True
 for histnamegroup in histnames:
     for histname in histnamegroup:
         
@@ -689,9 +687,28 @@ for histnamegroup in histnames:
             histstruct.add_dataframe( df, rebinningfactor = 1, standardbincount = 102 )
         except:
             print("WARNING: Could not add " + histname, file=sys.stderr)
+            failedruns[histname] = dfu.get_runs(df)
+            failedls[histname] = dfu.get_ls(df)
+            consistent = False
 
 
-# In[14]:
+# In[86]:
+
+
+runsls_total = {k: v for d in (runsls_training, runsls_good, runsls_bad) for k, v in d.items()}
+inconsistentRuns = {}
+if not consistent:
+    for histname in failedruns:
+        inconsistentRuns[histname] = {}
+        for run in runsls_total:
+            if int(run) not in failedruns[histname]:
+                runls = {}
+                runls[run] = [[-1]]
+                inconsistentRuns[histname].update(runls)
+    print(inconsistentRuns)
+
+
+# In[87]:
 
 
 ### Add Masks to Data
@@ -719,7 +736,7 @@ def assignMasks(histstruct, runsls_training, runsls_good, runsls_bad):
     return histstruct
 
 
-# In[15]:
+# In[88]:
 
 
 def define_concatamash_autoencoder(histstruct):
@@ -765,7 +782,7 @@ def define_concatamash_autoencoder(histstruct):
     return(histslist, vallist, autoencoders, train_normhist)
 
 
-# In[16]:
+# In[89]:
 
 
 ### Trains a combined autoencoder for every merge set
@@ -827,10 +844,12 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
         classifier = AutoEncoder.AutoEncoder(model=autoencoder)
         histstruct.add_classifier(histnames[i][0], classifier) 
         autoencodersTrain.append(classifier)
+        K.clear_session()
+        del(autoencoder, classifier)
     return autoencodersTrain
 
 
-# In[17]:
+# In[90]:
 
 
 ### Evaluate the Models for WP definition
@@ -870,7 +889,7 @@ def evaluate_models_train(histstruct):
     return [mse_train, mse_good, mse_bad]
 
 
-# In[18]:
+# In[91]:
 
 
 ### Plots and Distribution Analysis
@@ -920,7 +939,7 @@ def fit_mse_distribution(histstruct, mse_train):
     return fitfunc
 
 
-# In[19]:
+# In[92]:
 
 
 ### Prepare MSEs for Working Point Definition
@@ -943,7 +962,7 @@ def mse_analysis(histstruct, mse_good_eval, mse_bad_eval, fitfunc):
     return [logprob_good, logprob_bad, sep]
 
 
-# In[20]:
+# In[93]:
 
 
 def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBiasFactor):
@@ -967,22 +986,14 @@ def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBi
     scores = np.concatenate(tuple([-logprob_good,-logprob_bad]))
     scores = aeu.clip_scores( scores )
     
+    
     # Setting a threshold, below this working point defines anomalous data
     # Average is biased towards better recall per user specifications
     logprob_threshold = (1/(wpBiasFactor + 1)) * (wpBiasFactor*np.mean(logprob_good) + np.mean(logprob_bad))
     # Or set manual
     # logprob_threshold = 424
     
-    wp = logprob_threshold
-     
-    nsig = np.sum(labels)
-    nback = np.sum(1-labels)
-
-    # get confusion matrix entries
-    tp = np.sum(np.where((labels==1) & (scores>wp),1,0))/nsig
-    fp = np.sum(np.where((labels==0) & (scores>wp),1,0))/nback
-    tn = 1-fp
-    fn = 1-tp
+    (tp, fp, tn, fn) = get_confusion_matrix(scores,labels,-logprob_threshold)
     
     # Get metrics for analysis
     accuracy = (tp + tn) / (tp + fp + tn + fn)
@@ -993,14 +1004,93 @@ def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBi
     return [logprob_threshold, f_measure, avSep]
 
 
-# In[40]:
+# In[94]:
 
 
-### Main loop to iterate through possible histlists
-userfriendly = True
-top50 = []
-numModels = 0
-for i,histnames in enumerate(histlists):
+def get_confusion_matrix(scores, labels, wp='maxauc', plotwp=True,
+                          true_positive_label='Good', true_negative_label='Anomalous',
+                          pred_positive_label='Predicted good', pred_negative_label='Predicted anomalous',
+                          xaxlabelsize=None, yaxlabelsize=None, textsize=None,
+                          colormap='Blues', colortitle=None):
+    ### plot a confusion matrix
+    # input arguments:
+    # - scores and labels: defined in the same way as for get_roc
+    # - wp: the chosen working point 
+    #       (i.e. any score above wp is flagged as signal, any below is flagged as background)
+    #       note: wp can be a integer or float, in which case that value will be used directly,
+    #             or it can be a string in which case it will be used as the 'method' argument in get_wp!
+    # - plotwp: only relevant if wp is a string (see above), in which case plotwp will be used as the 'doplot' argument in get_wp
+    
+    if isinstance(wp,str): wp = get_wp(scores, labels, method=wp, doplot=plotwp)
+
+    nsig = np.sum(labels)
+    nback = np.sum(1-labels)
+
+    # get confusion matrix entries
+    tp = np.sum(np.where((labels==1) & (scores>wp),1,0))/nsig
+    fp = np.sum(np.where((labels==0) & (scores>wp),1,0))/nback
+    tn = 1-fp
+    fn = 1-tp
+    cmat = np.array([[tp,fn],[fp,tn]])
+    
+    # old plotting method with seaborn
+    #df_cm = pd.DataFrame(cmat, index = [true_negative_label,true_positive_label],
+    #              columns = [predicted_negative_label,predicted_positive_label])
+    #fig,ax = plt.subplots()
+    #sn.heatmap(df_cm, annot=True, cmap=plt.cm.Blues)
+    
+    # new plotting method with pyplot
+
+    # printouts for testing
+    #print('working point: {}'.format(wp))
+    #print('nsig: {}'.format(nsig))
+    #print('nback: {}'.format(nback))
+    #print('true positive / nsig: {}'.format(tp))
+    #print('false positive / nback: {}'.format(fp))
+
+    # return the working point (for later use if it was automatically calculated)
+    return (tp, fp, tn, fn)
+
+
+# In[95]:
+
+
+### Function to print memory information for debugging memory leaks
+import linecache
+import os
+import tracemalloc
+
+def display_top(snapshot, key_type='lineno', limit=3):
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+    ))
+    top_stats = snapshot.statistics(key_type)
+
+    print("Top %s lines" % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        # replace "/path/to/module/file.py" with "module/file.py"
+        filename = os.sep.join(frame.filename.split(os.sep)[-2:])
+        print("#%s: %s:%s: %.1f KiB"
+              % (index, filename, frame.lineno, stat.size / 1024))
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print('    %s' % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print("%s other: %.1f KiB" % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    print("Total allocated size: %.1f KiB" % (total / 1024))
+
+
+# In[100]:
+
+
+### Loop it Fxn
+def masterLoop(top50, numModels, histnames, histstruct):
     percComp = (numModels/conmodelcount)*100
     print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
     
@@ -1087,31 +1177,33 @@ for i,histnames in enumerate(histlists):
             
             
         del top50[-1]
-    del(f_measure)
-    del(autoencoders)
-    K.clear_session()
     
     print()
+    return top50
 
 
-# In[35]:
+# In[ ]:
 
 
-for list in top50:
+### Main loop to iterate through possible histlists
+userfriendly = True
+top50 = []
+numModels = 0
+for i,histnames in enumerate(histlists[0:60]):
+    #tracemalloc.start()
+    top50 = masterLoop(top50, numModels, histnames, histstruct)
+    #snapshot = tracemalloc.take_snapshot()
+    #display_top(snapshot)
+    gc.collect()
+    K.clear_session()
+
+
+# In[ ]:
+
+
+for i,list in enumerate(top50):
     print(list[2:])
     autoencoders = list[1]
     for j, autoencoder in enumerate(autoencoders):
-        autoencoder.save('../SavedModels/Permutations/Job' + str(i) + '/AE' + str(j))
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
+        autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
 
