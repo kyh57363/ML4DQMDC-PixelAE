@@ -972,7 +972,17 @@ def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBi
     logprob_threshold = (1/(wpBiasFactor + 1)) * (wpBiasFactor*np.mean(logprob_good) + np.mean(logprob_bad))
     # Or set manual
     # logprob_threshold = 424
-    (_, _, _, tp, fp, tn, fn) = aeu.get_confusion_matrix(scores,labels,-logprob_threshold)
+    
+    wp = logprob_threshold
+     
+    nsig = np.sum(labels)
+    nback = np.sum(1-labels)
+
+    # get confusion matrix entries
+    tp = np.sum(np.where((labels==1) & (scores>wp),1,0))/nsig
+    fp = np.sum(np.where((labels==0) & (scores>wp),1,0))/nback
+    tn = 1-fp
+    fn = 1-tp
     
     # Get metrics for analysis
     accuracy = (tp + tn) / (tp + fp + tn + fn)
@@ -1078,6 +1088,7 @@ for i,histnames in enumerate(histlists):
             
         del top50[-1]
     del(f_measure)
+    del(autoencoders)
     K.clear_session()
     
     print()
