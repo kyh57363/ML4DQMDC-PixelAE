@@ -1208,6 +1208,9 @@ for i,histnames in enumerate(histlists[0:60]):
 
 
 # In[ ]:
-for group in top50:
-    print(group[1])
+df = pd.DataFrame(top50, columns=['Histlist', 'Job', 'Train Time', 
+                                  'Separability', 'Worst Case Separation',
+                                  'F_measure', 'Working Point'])
+csvu.write_csv(df, 'Top50')
+    
     
