@@ -1095,7 +1095,7 @@ def display_top(snapshot, key_type='lineno', limit=3):
 
 
 ### Loop it Fxn
-def masterLoop(top50, numModels, histnames, histstruct):
+def masterLoop(aeStats, numModels, histnames, histstruct):
     percComp = (numModels/conmodelcount)*100
     print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
     
@@ -1134,7 +1134,9 @@ def masterLoop(top50, numModels, histnames, histstruct):
     sys.stderr = orig_out
     
     (logprob_threshold, f_measure, avSep) = evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBiasFactor)
-    
+
+    gpu_check()    
+
     for j, autoencoder in enumerate(autoencoders):
         autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
     del(autoencoders)
@@ -1148,47 +1150,29 @@ def masterLoop(top50, numModels, histnames, histstruct):
     
     # Empty list
     dataPackage = [histnames, i + 1, trainTime, separability, sep, f_measure, logprob_threshold]
-    if len(top50) < 1:
-        top50.append(dataPackage)
+    if len(aeStats) < 1:
+        aeStats.append(dataPackage)
         print('New Best Model:')
         print(' - Train Time: ' + str(trainTime))
         print(' - Separability: ' + str(separability))
         print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
         
-    # Partly full list
-    elif len(top50) < 50:
-        for j in range(len(top50) - 1, -1, -1):
-            if separability < top50[j][3]:
-                top50.insert(j+1, dataPackage)
+    # Non-empty List
+    else:
+        for j in range(len(aeStats) - 1, -1, -1):
+            if separability < aeStats[j][3]:
+                aeStats.insert(j+1, dataPackage)
                 break
             # Reached end of list
             if j == 0:
-                top50.insert(j, dataPackage)
+                aeStats.insert(j, dataPackage)
                 print('New Best Model:')
                 print(' - Train Time: ' + str(trainTime))
                 print(' - Separability: ' + str(separability))
                 print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
                
-    # Full list
-    elif separability > top50[49]:
-        for j in range(49, -1, -1):
-            if separability < top50[j][3]:
-                top50.insert(j+1, dataPackage)
-                break
-                
-            # Reached end of list
-            if j == 0:
-                top50.insert(j, dataPackage)
-                print('New Best Model:')
-                print(' - Train Time: ' + str(trainTime))
-                print(' - Separability: ' + str(separability))
-                print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
-            
-            
-        del top50[-1]
-    
     print()
-    return top50, numModels
+    return aeStats, numModels
 
 
 # In[ ]:
@@ -1200,21 +1184,20 @@ def gpu_check():
 
 ### Main loop to iterate through possible histlists
 userfriendly = True
-top50 = []
+aeStats = []
 numModels = 0
 for i,histnames in enumerate(histlists[0:60]):
     #tracemalloc.start()
-    (top50, numModels) = masterLoop(top50, numModels, histnames, histstruct)
+    (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct)
     #snapshot = tracemalloc.take_snapshot()
     #display_top(snapshot)
     gc.collect()
     K.clear_session()
-    gpu_check()
 
 # In[ ]:
-df = pd.DataFrame(top50, columns=['Histlist', 'Job', 'Train Time', 
+df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time', 
                                   'Separability', 'Worst Case Separation',
                                   'F_measure', 'Working Point'])
-csvu.write_csv(df, 'Top50')
+csvu.write_csv(df, 'Top50.csv')
     
     
