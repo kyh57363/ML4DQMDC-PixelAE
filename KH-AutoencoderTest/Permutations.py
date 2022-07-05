@@ -1192,7 +1192,11 @@ def masterLoop(top50, numModels, histnames, histstruct):
 
 
 # In[ ]:
-
+def gpu_check():
+    usage = tf.config.experimental.get_memory_usage('GPU:0')
+    print('Using {} GB of GPU Memory'.format(usage / 1000000000.0))
+    if usage > 6000000000:
+        raise Exception('Excessive GPU Memory Usage!')
 
 ### Main loop to iterate through possible histlists
 userfriendly = True
@@ -1205,7 +1209,7 @@ for i,histnames in enumerate(histlists[0:60]):
     #display_top(snapshot)
     gc.collect()
     K.clear_session()
-
+    gpu_check()
 
 # In[ ]:
 df = pd.DataFrame(top50, columns=['Histlist', 'Job', 'Train Time', 
