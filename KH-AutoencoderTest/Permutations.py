@@ -839,13 +839,13 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
         ## Train autoencoder
         train = autoencoder.fit(x=[X_train[:,i] for i in range(X_train.shape[1])],
                                 y=[X_train[:,i] for i in range(X_train.shape[1])],
-                            epochs=nb_epoch,
-                            batch_size=batch_size,
-                            shuffle=True,
-                            validation_data=([X_val[:,i] for i in range(X_val.shape[1])], [X_val[:,i] for i in range(X_val.shape[1])]),
-                            verbose=0,
-                            callbacks= [earlystop],    
-                            )
+                                epochs=nb_epoch,
+                                batch_size=batch_size,
+                                shuffle=True,
+                                validation_data=([X_val[:,i] for i in range(X_val.shape[1])], [X_val[:,i] for i in range(X_val.shape[1])]),
+                                verbose=0,
+                                callbacks= [earlystop],    
+                                )
         
         # Save classifier for evaluation
         classifier = AutoEncoder.AutoEncoder(model=autoencoder)
@@ -1027,8 +1027,6 @@ def get_confusion_matrix(scores, labels, wp='maxauc', plotwp=True,
     #       note: wp can be a integer or float, in which case that value will be used directly,
     #             or it can be a string in which case it will be used as the 'method' argument in get_wp!
     # - plotwp: only relevant if wp is a string (see above), in which case plotwp will be used as the 'doplot' argument in get_wp
-    
-    if isinstance(wp,str): wp = get_wp(scores, labels, method=wp, doplot=plotwp)
 
     nsig = np.sum(labels)
     nback = np.sum(1-labels)
@@ -1137,6 +1135,10 @@ def masterLoop(top50, numModels, histnames, histstruct):
     
     (logprob_threshold, f_measure, avSep) = evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBiasFactor)
     
+    for j, autoencoder in enumerate(autoencoders):
+        autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
+    del(autoencoders)
+    
     # Adding a penalty for unseparable autoencoders
     if(sep <= 0): sepFactor = 0.7
     else: sepFactor = 1
@@ -1145,7 +1147,7 @@ def masterLoop(top50, numModels, histnames, histstruct):
     separability = sepFactor*avSep
     
     # Empty list
-    dataPackage = [histnames, autoencoders, trainTime, separability, sep, f_measure, logprob_threshold]
+    dataPackage = [histnames, i + 1, trainTime, separability, sep, f_measure, logprob_threshold]
     if len(top50) < 1:
         top50.append(dataPackage)
         print('New Best Model:')
@@ -1186,7 +1188,7 @@ def masterLoop(top50, numModels, histnames, histstruct):
         del top50[-1]
     
     print()
-    return top50
+    return top50, numModels
 
 
 # In[ ]:
@@ -1198,7 +1200,7 @@ top50 = []
 numModels = 0
 for i,histnames in enumerate(histlists[0:60]):
     #tracemalloc.start()
-    top50 = masterLoop(top50, numModels, histnames, histstruct)
+    (top50, numModels) = masterLoop(top50, numModels, histnames, histstruct)
     #snapshot = tracemalloc.take_snapshot()
     #display_top(snapshot)
     gc.collect()
@@ -1206,11 +1208,6 @@ for i,histnames in enumerate(histlists[0:60]):
 
 
 # In[ ]:
-
-
-for i,list in enumerate(top50):
-    print(list[2:])
-    autoencoders = list[1]
-    for j, autoencoder in enumerate(autoencoders):
-        autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
-
+for group in top50:
+    print(group[1])
+    
