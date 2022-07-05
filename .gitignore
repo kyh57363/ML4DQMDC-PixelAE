@@ -10,3 +10,9 @@ omsapi/clientid.py
 # ignore /site folder as it is automatically created with doctools
 site
 *.csv
+data/Complete_Runs
+*.tar
+*.gz
+*.data-00000-of-00001
+*.pb
+*.index
