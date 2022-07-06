@@ -77,7 +77,7 @@ importlib.reload(HyperRectangleFitter)
 
 
 year = '2017'
-era = 'B'
+era = 'F'
 
 datadir = '../data/' + year + era + '/'
 
@@ -1186,6 +1186,7 @@ def gpu_check():
 userfriendly = True
 aeStats = []
 numModels = 0
+sys.stdout = open('HistPerm.log' , 'w')
 for i,histnames in enumerate(histlists[0:60]):
     #tracemalloc.start()
     (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct)
@@ -1200,4 +1201,4 @@ df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time',
                                   'F_measure', 'Working Point'])
 csvu.write_csv(df, 'Top50.csv')
     
-    
+sys.stdout.close()
