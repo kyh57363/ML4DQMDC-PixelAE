@@ -77,7 +77,7 @@ importlib.reload(HyperRectangleFitter)
 
 
 year = '2017'
-era = 'F'
+era = 'C'
 
 datadir = '../data/' + year + era + '/'
 
@@ -356,28 +356,28 @@ trainrunsls = {'2017B':{
 #                    "299329":[[-1]], 
 #                    "299480":[[-1]]    # A decently clean histogram
                     },
-                   '2017C': {
-#                      "299370":[[-1]],
-#                      "299394":[[-1]],
-#                      "299420":[[-1]],
+                  '2017C': {
+                      "299370":[[-1]],
+                      "299394":[[-1]],
+                      "299420":[[-1]],
 #                      "299477":[[-1]],
-#                      "299593":[[-1]],
-#                      "299597":[[-1]],
-#                      "299617":[[-1]],
-#                      "300018":[[-1]],
-#                      "300105":[[-1]],
+                      "299593":[[-1]],
+                      "299597":[[-1]],
+                      "299617":[[-1]],
+                      "300018":[[-1]],
+                      "300105":[[-1]],
 #                      "300117":[[-1]],
-#                      "300124":[[-1]],
-#                      "300234":[[-1]],
-#                      "300237":[[-1]],
+                      "300124":[[-1]],
+                      "300234":[[-1]],
+                      "300237":[[-1]],
 #                      "300240":[[-1]],
-#                      "300370":[[-1]],
-#                      "300157":[[-1]],
-#                      "300373":[[-1]],
-#                      "300392":[[-1]],
+                      "300370":[[-1]],
+                      "300157":[[-1]],
+                      "300373":[[-1]],
+                      "300392":[[-1]],
 #                      "300395":[[-1]],
-#                      "300401":[[-1]],
-#                      "300462":[[-1]],
+                      "300401":[[-1]],
+                      "300462":[[-1]],
 #                      "300466":[[-1]],
                       "300514":[[-1]],
                       "300517":[[-1]],
@@ -425,8 +425,8 @@ trainrunsls = {'2017B':{
               }
 }
 
-# Select a list of good runs to test on in development training_mode
-# Should be validated by eye
+# select a list of good runs to test on in development training_mode
+# should be validated by eye
 goodrunsls = {'2017B':{
 #                    "297057":[[-1]], 
 #                    "297099":[[-1]], 
@@ -474,30 +474,30 @@ goodrunsls = {'2017B':{
 #                      "299370":[[-1]],
 #                      "299394":[[-1]],
 #                      "299420":[[-1]],
-#                      "299477":[[-1]],
+                      "299477":[[-1]],
 #                      "299593":[[-1]],
 #                      "299597":[[-1]],
 #                      "299617":[[-1]],
 #                      "300018":[[-1]],
 #                      "300105":[[-1]],
-#                      "300117":[[-1]],
+                      "300117":[[-1]],
 #                      "300124":[[-1]],
 #                      "300234":[[-1]],
 #                      "300237":[[-1]],
-#                      "300240":[[-1]],
+                      "300240":[[-1]],
 #                      "300370":[[-1]],
 #                      "300157":[[-1]],
 #                      "300373":[[-1]],
 #                      "300392":[[-1]],
-#                      "300395":[[-1]],
+                      "300395":[[-1]],
 #                      "300401":[[-1]],
 #                      "300462":[[-1]],
-#                      "300466":[[-1]],
-                      "300514":[[-1]],
-                      "300517":[[-1]],
-                      "300538":[[-1]],
-                      "300539":[[-1]],
-                      "300364":[[-1]],
+                      "300466":[[-1]],
+#                      "300514":[[-1]],
+#                      "300517":[[-1]],
+#                      "300538":[[-1]],
+#                      "300539":[[-1]],
+#                      "300364":[[-1]],
                 },'2017F':{
                       "305310":[[-1]],
                       "305040":[[-1]],
@@ -648,7 +648,7 @@ modelname = plotNames
 
 # Bias Factors
 fmBiasFactor = 2
-wpBiasFactor = 20
+wpBiasFactor = 4
 
 
 # In[84]:
@@ -675,9 +675,12 @@ failedruns = {}
 failedls ={}
 # Unpack histnames and add every histogram individually
 consistent = True
+sys.stdout = open('HistPerm.log' , 'w')
 for histnamegroup in histnames:
     for histname in histnamegroup:
-        
+        sys.stdout.write('\rAdding {}...'.format(histname) + '                                                ')
+        sys.stdout.flush()       
+ 
         # Bring the histograms into memory from storage for later use
         filename = datadir + year + era + '/DF' + year + era + '_' + histname + '.csv'
         df = dloader.get_dataframe_from_file( filename )
@@ -697,7 +700,9 @@ for histnamegroup in histnames:
             failedruns[histname] = dfu.get_runs(df)
             failedls[histname] = dfu.get_ls(df)
             consistent = False
-
+sys.stdout.write('\rData import complete.')
+sys.stdout.flush()
+sys.stdout.close()
 
 # In[86]:
 
@@ -770,11 +775,11 @@ def define_concatamash_autoencoder(histstruct):
             # Defining layers
             conc_layer = Concatenate()(Input_layers)
             encoder = Dense(arch * 2, activation="tanh")(conc_layer)
-            encoder = Dense(arch, activation='relu')(encoder)
+            encoder = Dense(arch/8, activation='relu')(encoder)
             
-            encoder = Dense(arch/2, activation='relu')(encoder)
+            encoder = Dense(arch/16, activation='relu')(encoder)
             
-            decoder = Dense(arch, activation="relu")(encoder)
+            decoder = Dense(arch/8, activation="relu")(encoder)
             decoder = Dense(arch * 2, activation="tanh")(decoder)
             
             Output_layers=[Dense(input_dim, activation="tanh")(decoder) for i in range(X_train.shape[1])]
@@ -799,7 +804,7 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
     autoencodersTrain = []
     for i in range(len(histslist)):
         
-        sys.stdout.write('\rNow training model {}/'.format(i + 1) + str(len(histslist)))
+        sys.stdout.write('\rNow training model {}/'.format(i + 1) + str(len(histslist)) + '                     ')
         sys.stdout.flush()
         
         # Set variables to temporary values for better transparency
@@ -810,7 +815,7 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
         
         ## Model parameters
         nb_epoch = 500
-        batch_size = 1000
+        batch_size = 10000
         
         #checkpoint_filepath = 'checkpoint'
         #model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
@@ -988,6 +993,12 @@ def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBi
     logprob_bad[logprob_bad > goodMax] = goodMax
     
     avSep = np.mean(logprob_good) - np.mean(logprob_bad)
+
+    # Since separation is the most important aspect, this ensures f-measure indicates how useful the separation is
+    #     even if the model very bad
+    if avSep < 0:
+        logprob_good = -logprob_good
+        logprob_bad = -logprob_bad
     
     labels = np.concatenate(tuple([labels_good,labels_bad]))
     scores = np.concatenate(tuple([-logprob_good,-logprob_bad]))
