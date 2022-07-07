@@ -648,7 +648,7 @@ modelname = plotNames
 
 # Bias Factors
 fmBiasFactor = 2
-wpBiasFactor = 20
+wpBiasFactor = 2
 
 
 # In[84]:
@@ -982,23 +982,12 @@ def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBi
     labels_bad = np.ones(len(logprob_bad)) # signal: label = 1
     
     # Note this will give an error if there are all infinities in one or both arrays
-    badMin = min(np.where(logprob_bad != -np.inf, logprob_bad, np.inf))
-    goodMax = max(np.where(logprob_good != np.inf, logprob_good, -np.inf))
+    badMin = min(np.where(logprob_bad != -np.inf, logprob_bad, 0))
+    goodMax = max(np.where(logprob_good != np.inf, logprob_good, 800))
     
-    # Case where all bad values are -inf
-    if (len(np.where(logprob_bad != -np.inf, logprob_bad, 0)) == 0):
-        badMin = 0
-    
-    # Case where all good values are inf
-    if (len(np.where(logprob_good != np.inf, logprob_good, 10000)) == 0):
-        goodMax = 500
-    
-    # Getting rid of infinities
-    logprob_good[logprob_good > 10000] = goodMax
-    logprob_bad[logprob_bad < 0] = badMin
-    # These only take effect if a histogram is grossly misclassified
-    logprob_good[logprob_good < 0] = badMin
-    logprob_bad[logprob_bad > 10000] = goodMax
+    # These only take effect if a histogram is grossly misclassified, eliminating awful cases
+    logprob_good[logprob_good == -np.inf] = badMin
+    logprob_bad[logprob_bad == np.inf] = goodMax
     
     separable = logprob_bad[logprob_bad < min(logprob_good)]
     sepPercB = len(separable) / len(logprob_bad)
