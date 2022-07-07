@@ -77,7 +77,7 @@ importlib.reload(HyperRectangleFitter)
 
 
 year = '2017'
-era = 'C'
+era = 'F'
 
 datadir = '../data/' + year + era + '/'
 
@@ -648,7 +648,7 @@ modelname = plotNames
 
 # Bias Factors
 fmBiasFactor = 2
-wpBiasFactor = 4
+wpBiasFactor = 20
 
 
 # In[84]:
@@ -985,20 +985,30 @@ def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBi
     badMin = min(np.where(logprob_bad != -np.inf, logprob_bad, np.inf))
     goodMax = max(np.where(logprob_good != np.inf, logprob_good, -np.inf))
     
+    # Case where all bad values are -inf
+    if (len(np.where(logprob_bad != -np.inf, logprob_bad, 0)) == 0):
+        badMin = 0
+    
+    # Case where all good values are inf
+    if (len(np.where(logprob_good != np.inf, logprob_good, 10000)) == 0):
+        goodMax = 500
+    
     # Getting rid of infinities
-    logprob_good[logprob_good > 500] = goodMax
+    logprob_good[logprob_good > 10000] = goodMax
     logprob_bad[logprob_bad < 0] = badMin
     # These only take effect if a histogram is grossly misclassified
-    logprob_good[logprob_good < badMin] = badMin
-    logprob_bad[logprob_bad > goodMax] = goodMax
+    logprob_good[logprob_good < 0] = badMin
+    logprob_bad[logprob_bad > 10000] = goodMax
     
+    separable = logprob_bad[logprob_bad < min(logprob_good)]
+    sepPercB = len(separable) / len(logprob_bad)
+    separable = logprob_good[logprob_good > max(logprob_bad)]
+    sepPercG = len(separable) / len(logprob_good)
+
     avSep = np.mean(logprob_good) - np.mean(logprob_bad)
 
     # Since separation is the most important aspect, this ensures f-measure indicates how useful the separation is
     #     even if the model very bad
-    if avSep < 0:
-        logprob_good = -logprob_good
-        logprob_bad = -logprob_bad
     
     labels = np.concatenate(tuple([labels_good,labels_bad]))
     scores = np.concatenate(tuple([-logprob_good,-logprob_bad]))
@@ -1019,7 +1029,7 @@ def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBi
     recall = tp / (tp + fn)
     f_measure = (1 + fmBiasFactor * fmBiasFactor) * ((precision * recall) / ((fmBiasFactor * fmBiasFactor * precision) + recall)) 
     
-    return [logprob_threshold, f_measure, avSep]
+    return [logprob_threshold, f_measure, avSep, sepPercB, sepPercG]
 
 
 # In[94]:
@@ -1144,7 +1154,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
     (logprob_good, logprob_bad, sep) = mse_analysis(histstruct, mse_good_eval, mse_bad_eval, fitfunc)
     sys.stderr = orig_out
     
-    (logprob_threshold, f_measure, avSep) = evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBiasFactor)
+    (logprob_threshold, f_measure, avSep, sepPercB, sepPercG) = evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBiasFactor)
 
     gpu_check()    
 
@@ -1160,26 +1170,32 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
     separability = sepFactor*avSep
     
     # Empty list
-    dataPackage = [histnames, i + 1, trainTime, separability, sep, f_measure, logprob_threshold]
+    dataPackage = [histnames, i + 1, trainTime, sepPercB, sep, f_measure, logprob_threshold, separability, sepPercG]
     if len(aeStats) < 1:
         aeStats.append(dataPackage)
         print('New Best Model:')
         print(' - Train Time: ' + str(trainTime))
-        print(' - Separability: ' + str(separability))
+        print(' - Separable Percent Bad: ' + str(sepPercB))
+        print(' - Separable Percent Good: ' + str(sepPercG))
         print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
         
     # Non-empty List
     else:
         for j in range(len(aeStats) - 1, -1, -1):
-            if separability < aeStats[j][3]:
+            if sepPercB < aeStats[j][3]:
                 aeStats.insert(j+1, dataPackage)
                 break
+            elif sepPercB == aeStats[j][3]:
+                if sepPercG < aeStats[j][8]:
+                    aeStats.insert(j+1, dataPackage)
+                    break
             # Reached end of list
             if j == 0:
                 aeStats.insert(j, dataPackage)
                 print('New Best Model:')
                 print(' - Train Time: ' + str(trainTime))
-                print(' - Separability: ' + str(separability))
+                print(' - Separable Percent Bad: ' + str(sepPercB))
+                print(' - Separable Percent Good: ' + str(sepPercG))
                 print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
                
     print()
@@ -1198,7 +1214,7 @@ userfriendly = True
 aeStats = []
 numModels = 0
 sys.stdout = open('HistPerm.log' , 'w')
-for i,histnames in enumerate(histlists[0:60]):
+for i,histnames in enumerate(histlists):
     #tracemalloc.start()
     (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct)
     #snapshot = tracemalloc.take_snapshot()
@@ -1208,8 +1224,8 @@ for i,histnames in enumerate(histlists[0:60]):
 
 # In[ ]:
 df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time', 
-                                  'Separability', 'Worst Case Separation',
-                                  'F_measure', 'Working Point'])
+                                  'Separarable Percent Bad', 'Worst Case Separation',
+                                  'F_measure', 'Working Point', 'Separability', 'Separable Percent Good'])
 csvu.write_csv(df, 'Top50.csv')
     
 sys.stdout.close()
