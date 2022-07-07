@@ -982,8 +982,18 @@ def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBi
     labels_bad = np.ones(len(logprob_bad)) # signal: label = 1
     
     # Note this will give an error if there are all infinities in one or both arrays
-    badMin = min(np.where(logprob_bad != -np.inf, logprob_bad, 0))
-    goodMax = max(np.where(logprob_good != np.inf, logprob_good, 800))
+    badMin = min(np.where(logprob_bad != -np.inf, logprob_bad, np.inf))
+    goodMax = max(np.where(logprob_good != np.inf, logprob_good, -np.inf))
+    
+    # Correction if all values are off
+    if badMin == np.inf:
+        badMin = 0
+    if goodMax == -np.inf:
+        goodMax = 800
+
+    # Taking out infinity for wp definition
+    logprob_good = np.where(logprob_good != np.inf, logprob_good, goodMax)
+    logprob_bad = np.where(logprob_bad != -np.inf, logprob_bad, badMin)
     
     # These only take effect if a histogram is grossly misclassified, eliminating awful cases
     logprob_good[logprob_good == -np.inf] = badMin
