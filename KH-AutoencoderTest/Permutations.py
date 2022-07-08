@@ -847,7 +847,7 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
     autoencodersTrain = []
     for i in range(len(histslist)):
         
-        sys.stdout.write('\rNow training model {}/'.format(i + 1) + str(len(histslist)) + '                     ')
+        sys.stdout.write('\rNow training model {}/'.format(i + 1) + str(len(histslist)))
         sys.stdout.flush()
         
         # Set variables to temporary values for better transparency
