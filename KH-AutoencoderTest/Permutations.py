@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[39]:
+# In[97]:
 
 
 ### imports
 
 # external modules
 import os
+import gc
 from os.path import exists
 import os.path
 import pandas as pd
@@ -27,6 +28,13 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from tensorflow.keras.layers import Input, Dense, Concatenate
 from tensorflow.keras.models import Model, Sequential, load_model
 import importlib
+
+# Necessary to keep GPU usage to a minimum
+from tensorflow.compat.v1 import ConfigProto
+from tensorflow.compat.v1 import InteractiveSession
+config = ConfigProto()
+config.gpu_options.allow_growth = True
+session = InteractiveSession(config=config)
 
 # local modules
 sys.path.append('../utils')
@@ -64,22 +72,17 @@ importlib.reload(SeminormalFitter)
 importlib.reload(GaussianKdeFitter)
 importlib.reload(HyperRectangleFitter)
 
-# If this doesn't fix the OOM error, I'm gonna cry
-from tensorflow.compat.v1 import ConfigProto
-from tensorflow.compat.v1 import InteractiveSession
-config = ConfigProto()
-config.gpu_options.allow_growth = True
-session = InteractiveSession(config=config)
-# In[2]:
+
+# In[74]:
 
 
 year = '2017'
-era = 'B'
+era = 'E'
 
 datadir = '../data/' + year + era + '/'
 
 
-# In[3]:
+# In[75]:
 
 
 blk1Vars = ['chargeInner', 'chargeOuter', 'adc', 'size']
@@ -100,7 +103,7 @@ miscVars = [
 ]
 
 
-# In[4]:
+# In[76]:
 
 
 ### Get the different permutations for block 1
@@ -145,7 +148,7 @@ for size in range(1, len(blk1Vars) + 1):
         combosBlk1.append(subList)
 
 
-# In[5]:
+# In[77]:
 
 
 ### Permutations for block 2
@@ -210,7 +213,7 @@ for size in range(1, len(blk2Vars) + 1):
         combosBlk2.append(subList)
 
 
-# In[6]:
+# In[78]:
 
 
 ### Permutations for block 3
@@ -234,7 +237,7 @@ for size in range(1, len(blk3Vars) + 1):
         combosBlk3.append([subList])
 
 
-# In[7]:
+# In[79]:
 
 
 ### Permutations for block 4
@@ -255,7 +258,7 @@ for size in range(0, len(miscVars) + 1):
         combosBlk4.append(subList)
 
 
-# In[8]:
+# In[80]:
 
 
 ### Parsing combinations to create histlists
@@ -300,7 +303,7 @@ print('\nTraining Sets: ' + str(len(histlists)))
 print()
 
 
-# In[9]:
+# In[81]:
 
 
 ### Data Controls and Selection - 1D Autoncoder
@@ -353,34 +356,55 @@ trainrunsls = {'2017B':{
 #                    "299329":[[-1]], 
 #                    "299480":[[-1]]    # A decently clean histogram
                     },
-                   '2017C': {
-#                      "299370":[[-1]],
-#                      "299394":[[-1]],
-#                      "299420":[[-1]],
+                  '2017C': {
+                      "299370":[[-1]],
+                      "299394":[[-1]],
+                      "299420":[[-1]],
 #                      "299477":[[-1]],
-#                      "299593":[[-1]],
-#                      "299597":[[-1]],
-#                      "299617":[[-1]],
-#                      "300018":[[-1]],
-#                      "300105":[[-1]],
+                      "299593":[[-1]],
+                      "299597":[[-1]],
+                      "299617":[[-1]],
+                      "300018":[[-1]],
+                      "300105":[[-1]],
 #                      "300117":[[-1]],
-#                      "300124":[[-1]],
-#                      "300234":[[-1]],
-#                      "300237":[[-1]],
+                      "300124":[[-1]],
+                      "300234":[[-1]],
+                      "300237":[[-1]],
 #                      "300240":[[-1]],
-#                      "300370":[[-1]],
-#                      "300157":[[-1]],
-#                      "300373":[[-1]],
-#                      "300392":[[-1]],
+                      "300370":[[-1]],
+                      "300157":[[-1]],
+                      "300373":[[-1]],
+                      "300392":[[-1]],
 #                      "300395":[[-1]],
-#                      "300401":[[-1]],
-#                      "300462":[[-1]],
+                      "300401":[[-1]],
+                      "300462":[[-1]],
 #                      "300466":[[-1]],
                       "300514":[[-1]],
                       "300517":[[-1]],
                       "300538":[[-1]],
                       "300539":[[-1]],
                       "300364":[[-1]],
+                 },'2017E': {
+                      #                   "303819":[[-1]],
+                    "303999":[[-1]],
+                    "304119":[[-1]],
+                    "304120":[[-1]],
+                    "304197":[[-1]],
+                    "304505":[[-1]],
+                    "304198":[[-1]],
+#                    "304199":[[-1]],
+#                    "304209":[[-1]],
+#                    "304333":[[-1]],
+#                    "304446":[[-1]],
+#                    "304449":[[-1]],
+                    "304452":[[-1]],
+                    "304508":[[-1]],
+                    "304625":[[-1]],
+                    "304655":[[-1]],
+                    "304737":[[-1]],
+                    "304778":[[-1]],
+                    "306459":[[-1]],
+                    "304196":[[-1]],
                  },'2017F':{
 #                      "305310":[[-1]],
 #                      "305040":[[-1]],
@@ -422,8 +446,8 @@ trainrunsls = {'2017B':{
               }
 }
 
-# Select a list of good runs to test on in development training_mode
-# Should be validated by eye
+# select a list of good runs to test on in development training_mode
+# should be validated by eye
 goodrunsls = {'2017B':{
 #                    "297057":[[-1]], 
 #                    "297099":[[-1]], 
@@ -471,30 +495,52 @@ goodrunsls = {'2017B':{
 #                      "299370":[[-1]],
 #                      "299394":[[-1]],
 #                      "299420":[[-1]],
-#                      "299477":[[-1]],
+                      "299477":[[-1]],
 #                      "299593":[[-1]],
 #                      "299597":[[-1]],
 #                      "299617":[[-1]],
 #                      "300018":[[-1]],
 #                      "300105":[[-1]],
-#                      "300117":[[-1]],
+                      "300117":[[-1]],
 #                      "300124":[[-1]],
 #                      "300234":[[-1]],
 #                      "300237":[[-1]],
-#                      "300240":[[-1]],
+                      "300240":[[-1]],
 #                      "300370":[[-1]],
 #                      "300157":[[-1]],
 #                      "300373":[[-1]],
 #                      "300392":[[-1]],
-#                      "300395":[[-1]],
+                      "300395":[[-1]],
 #                      "300401":[[-1]],
 #                      "300462":[[-1]],
-#                      "300466":[[-1]],
-                      "300514":[[-1]],
-                      "300517":[[-1]],
-                      "300538":[[-1]],
-                      "300539":[[-1]],
-                      "300364":[[-1]],
+                      "300466":[[-1]],
+#                      "300514":[[-1]],
+#                      "300517":[[-1]],
+#                      "300538":[[-1]],
+#                      "300539":[[-1]],
+#                      "300364":[[-1]],
+                },'2017E':{
+#                    "303819":[[-1]],
+#                    "303999":[[-1]],
+#                    "304119":[[-1]],
+#                    "304120":[[-1]],
+#                    "304197":[[-1]],
+#                    "304505":[[-1]],
+#                    "304198":[[-1]],
+                    "304199":[[-1]],
+                    "304209":[[-1]],
+                    "304333":[[-1]],
+                    "304446":[[-1]],
+                    "304449":[[-1]],
+#                    "304452":[[-1]],
+#                    "304508":[[-1]],
+#                    "304625":[[-1]],
+#                    "304655":[[-1]],
+#                    "304737":[[-1]],
+#                    "304778":[[-1]],
+#                    "306459":[[-1]],
+#                    "304196":[[-1]],
+
                 },'2017F':{
                       "305310":[[-1]],
                       "305040":[[-1]],
@@ -591,9 +637,9 @@ badrunsls = {'2017B':
              '2017E':{
                  "304740":[[-1]], # Bad for pixels and tracking - holes in PXLayer 1
                  "304776":[[-1]], # Bad for pixels and tracking - holes in PXLayer 1
-                 "304506":[[-1]], # Portcard problem for pixels
-                 "304507":[[-1]], # Portcard problem for pixels 
-                 "303989":[[-1]], # Bad for pixels, power supply died
+#                 "304506":[[-1]], # Portcard problem for pixels
+#                 "304507":[[-1]], # Portcard problem for pixels 
+#                 "303989":[[-1]], # Bad for pixels, power supply died
                  "303824":[[-1]]  # Partly bad for strips due to a test
              },
              '2017F':{
@@ -620,7 +666,7 @@ badrunsls = {'2017B':
 histnames = histlists[255]
 
 
-# In[10]:
+# In[82]:
 
 
 ### Define Run Properties - Combined Autoencoder
@@ -630,7 +676,7 @@ histnames = histlists[255]
 save = False
 
 
-# In[11]:
+# In[83]:
 
 
 ### Model Controls and Selection - 1D Autoencoder
@@ -645,10 +691,10 @@ modelname = plotNames
 
 # Bias Factors
 fmBiasFactor = 2
-wpBiasFactor = 20
+wpBiasFactor = 2
 
 
-# In[12]:
+# In[84]:
 
 
 # train on a user-defined subset of runs
@@ -661,18 +707,23 @@ runsls_bad = badrunsls[year + era]
 runsls_good = goodrunsls[year + era]
 
 
-# In[13]:
+# In[85]:
 
 
 # Initializations
 dloader = DataLoader.DataLoader()
 histstruct = FlexiStruct.FlexiStruct()
 histstruct.reset_histlist(histnames)
-
+failedruns = {}
+failedls ={}
 # Unpack histnames and add every histogram individually
+consistent = True
+sys.stdout = open('HistPerm.log' , 'w')
 for histnamegroup in histnames:
     for histname in histnamegroup:
-        
+        sys.stdout.write('\rAdding {}...'.format(histname) + '                                                ')
+        sys.stdout.flush()       
+ 
         # Bring the histograms into memory from storage for later use
         filename = datadir + year + era + '/DF' + year + era + '_' + histname + '.csv'
         df = dloader.get_dataframe_from_file( filename )
@@ -689,9 +740,30 @@ for histnamegroup in histnames:
             histstruct.add_dataframe( df, rebinningfactor = 1, standardbincount = 102 )
         except:
             print("WARNING: Could not add " + histname, file=sys.stderr)
+            failedruns[histname] = dfu.get_runs(df)
+            failedls[histname] = dfu.get_ls(df)
+            consistent = False
+sys.stdout.write('\rData import complete.')
+sys.stdout.flush()
+sys.stdout.close()
+
+# In[86]:
 
 
-# In[14]:
+runsls_total = {k: v for d in (runsls_training, runsls_good, runsls_bad) for k, v in d.items()}
+inconsistentRuns = {}
+if not consistent:
+    for histname in failedruns:
+        inconsistentRuns[histname] = {}
+        for run in runsls_total:
+            if int(run) not in failedruns[histname]:
+                runls = {}
+                runls[run] = [[-1]]
+                inconsistentRuns[histname].update(runls)
+    print(inconsistentRuns)
+
+
+# In[87]:
 
 
 ### Add Masks to Data
@@ -719,7 +791,7 @@ def assignMasks(histstruct, runsls_training, runsls_good, runsls_bad):
     return histstruct
 
 
-# In[15]:
+# In[88]:
 
 
 def define_concatamash_autoencoder(histstruct):
@@ -746,11 +818,11 @@ def define_concatamash_autoencoder(histstruct):
             # Defining layers
             conc_layer = Concatenate()(Input_layers)
             encoder = Dense(arch * 2, activation="tanh")(conc_layer)
-            encoder = Dense(arch, activation='relu')(encoder)
-            
             encoder = Dense(arch/2, activation='relu')(encoder)
-            
-            decoder = Dense(arch, activation="relu")(encoder)
+            encoder = Dense(arch/8, activation='relu')(encoder)
+            encoder = Dense(arch/16, activation='relu')(encoder)
+            decoder = Dense(arch/8, activation="relu")(encoder)
+            decoder = Dense(arch/2, activation='relu')(encoder)
             decoder = Dense(arch * 2, activation="tanh")(decoder)
             
             Output_layers=[Dense(input_dim, activation="tanh")(decoder) for i in range(X_train.shape[1])]
@@ -765,7 +837,7 @@ def define_concatamash_autoencoder(histstruct):
     return(histslist, vallist, autoencoders, train_normhist)
 
 
-# In[16]:
+# In[89]:
 
 
 ### Trains a combined autoencoder for every merge set
@@ -786,7 +858,7 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
         
         ## Model parameters
         nb_epoch = 500
-        batch_size = 1000
+        batch_size = 10000
         
         #checkpoint_filepath = 'checkpoint'
         #model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
@@ -815,22 +887,24 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
         ## Train autoencoder
         train = autoencoder.fit(x=[X_train[:,i] for i in range(X_train.shape[1])],
                                 y=[X_train[:,i] for i in range(X_train.shape[1])],
-                            epochs=nb_epoch,
-                            batch_size=batch_size,
-                            shuffle=True,
-                            validation_data=([X_val[:,i] for i in range(X_val.shape[1])], [X_val[:,i] for i in range(X_val.shape[1])]),
-                            verbose=0,
-                            callbacks= [earlystop],    
-                            )
+                                epochs=nb_epoch,
+                                batch_size=batch_size,
+                                shuffle=True,
+                                validation_data=([X_val[:,i] for i in range(X_val.shape[1])], [X_val[:,i] for i in range(X_val.shape[1])]),
+                                verbose=0,
+                                callbacks= [earlystop],    
+                                )
         
         # Save classifier for evaluation
         classifier = AutoEncoder.AutoEncoder(model=autoencoder)
         histstruct.add_classifier(histnames[i][0], classifier) 
         autoencodersTrain.append(classifier)
+        K.clear_session()
+        del(autoencoder, classifier)
     return autoencodersTrain
 
 
-# In[17]:
+# In[90]:
 
 
 ### Evaluate the Models for WP definition
@@ -870,7 +944,7 @@ def evaluate_models_train(histstruct):
     return [mse_train, mse_good, mse_bad]
 
 
-# In[18]:
+# In[91]:
 
 
 ### Plots and Distribution Analysis
@@ -920,7 +994,7 @@ def fit_mse_distribution(histstruct, mse_train):
     return fitfunc
 
 
-# In[19]:
+# In[92]:
 
 
 ### Prepare MSEs for Working Point Definition
@@ -943,7 +1017,7 @@ def mse_analysis(histstruct, mse_good_eval, mse_bad_eval, fitfunc):
     return [logprob_good, logprob_bad, sep]
 
 
-# In[20]:
+# In[93]:
 
 
 def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBiasFactor):
@@ -954,25 +1028,42 @@ def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBi
     badMin = min(np.where(logprob_bad != -np.inf, logprob_bad, np.inf))
     goodMax = max(np.where(logprob_good != np.inf, logprob_good, -np.inf))
     
-    # Getting rid of infinities
-    logprob_good[logprob_good > 500] = goodMax
-    logprob_bad[logprob_bad < 0] = badMin
-    # These only take effect if a histogram is grossly misclassified
-    logprob_good[logprob_good < badMin] = badMin
-    logprob_bad[logprob_bad > goodMax] = goodMax
+    # Correction if all values are off
+    if badMin == np.inf:
+        badMin = 0
+    if goodMax == -np.inf:
+        goodMax = 800
+
+    # Taking out infinity for wp definition
+    logprob_good = np.where(logprob_good != np.inf, logprob_good, goodMax)
+    logprob_bad = np.where(logprob_bad != -np.inf, logprob_bad, badMin)
     
+    # These only take effect if a histogram is grossly misclassified, eliminating awful cases
+    logprob_good[logprob_good == -np.inf] = badMin
+    logprob_bad[logprob_bad == np.inf] = goodMax
+    
+    separable = logprob_bad[logprob_bad < min(logprob_good)]
+    sepPercB = len(separable) / len(logprob_bad)
+    separable = logprob_good[logprob_good > max(logprob_bad)]
+    sepPercG = len(separable) / len(logprob_good)
+
     avSep = np.mean(logprob_good) - np.mean(logprob_bad)
+
+    # Since separation is the most important aspect, this ensures f-measure indicates how useful the separation is
+    #     even if the model very bad
     
     labels = np.concatenate(tuple([labels_good,labels_bad]))
     scores = np.concatenate(tuple([-logprob_good,-logprob_bad]))
     scores = aeu.clip_scores( scores )
+    
     
     # Setting a threshold, below this working point defines anomalous data
     # Average is biased towards better recall per user specifications
     logprob_threshold = (1/(wpBiasFactor + 1)) * (wpBiasFactor*np.mean(logprob_good) + np.mean(logprob_bad))
     # Or set manual
     # logprob_threshold = 424
-    (_, _, _, tp, fp, tn, fn) = aeu.get_confusion_matrix(scores,labels,-logprob_threshold)
+    
+    (tp, fp, tn, fn) = get_confusion_matrix(scores,labels,-logprob_threshold)
     
     # Get metrics for analysis
     accuracy = (tp + tn) / (tp + fp + tn + fn)
@@ -980,17 +1071,94 @@ def evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBi
     recall = tp / (tp + fn)
     f_measure = (1 + fmBiasFactor * fmBiasFactor) * ((precision * recall) / ((fmBiasFactor * fmBiasFactor * precision) + recall)) 
     
-    return [logprob_threshold, f_measure, avSep]
+    return [logprob_threshold, f_measure, avSep, sepPercB, sepPercG]
 
 
-# In[40]:
+# In[94]:
 
 
-### Main loop to iterate through possible histlists
-userfriendly = True
-top50 = []
-numModels = 0
-for i,histnames in enumerate(histlists):
+def get_confusion_matrix(scores, labels, wp='maxauc', plotwp=True,
+                          true_positive_label='Good', true_negative_label='Anomalous',
+                          pred_positive_label='Predicted good', pred_negative_label='Predicted anomalous',
+                          xaxlabelsize=None, yaxlabelsize=None, textsize=None,
+                          colormap='Blues', colortitle=None):
+    ### plot a confusion matrix
+    # input arguments:
+    # - scores and labels: defined in the same way as for get_roc
+    # - wp: the chosen working point 
+    #       (i.e. any score above wp is flagged as signal, any below is flagged as background)
+    #       note: wp can be a integer or float, in which case that value will be used directly,
+    #             or it can be a string in which case it will be used as the 'method' argument in get_wp!
+    # - plotwp: only relevant if wp is a string (see above), in which case plotwp will be used as the 'doplot' argument in get_wp
+
+    nsig = np.sum(labels)
+    nback = np.sum(1-labels)
+
+    # get confusion matrix entries
+    tp = np.sum(np.where((labels==1) & (scores>wp),1,0))/nsig
+    fp = np.sum(np.where((labels==0) & (scores>wp),1,0))/nback
+    tn = 1-fp
+    fn = 1-tp
+    cmat = np.array([[tp,fn],[fp,tn]])
+    
+    # old plotting method with seaborn
+    #df_cm = pd.DataFrame(cmat, index = [true_negative_label,true_positive_label],
+    #              columns = [predicted_negative_label,predicted_positive_label])
+    #fig,ax = plt.subplots()
+    #sn.heatmap(df_cm, annot=True, cmap=plt.cm.Blues)
+    
+    # new plotting method with pyplot
+
+    # printouts for testing
+    #print('working point: {}'.format(wp))
+    #print('nsig: {}'.format(nsig))
+    #print('nback: {}'.format(nback))
+    #print('true positive / nsig: {}'.format(tp))
+    #print('false positive / nback: {}'.format(fp))
+
+    # return the working point (for later use if it was automatically calculated)
+    return (tp, fp, tn, fn)
+
+
+# In[95]:
+
+
+### Function to print memory information for debugging memory leaks
+import linecache
+import os
+import tracemalloc
+
+def display_top(snapshot, key_type='lineno', limit=3):
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+    ))
+    top_stats = snapshot.statistics(key_type)
+
+    print("Top %s lines" % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        # replace "/path/to/module/file.py" with "module/file.py"
+        filename = os.sep.join(frame.filename.split(os.sep)[-2:])
+        print("#%s: %s:%s: %.1f KiB"
+              % (index, filename, frame.lineno, stat.size / 1024))
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print('    %s' % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print("%s other: %.1f KiB" % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    print("Total allocated size: %.1f KiB" % (total / 1024))
+
+
+# In[100]:
+
+
+### Loop it Fxn
+def masterLoop(aeStats, numModels, histnames, histstruct):
     percComp = (numModels/conmodelcount)*100
     print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
     
@@ -1028,7 +1196,13 @@ for i,histnames in enumerate(histlists):
     (logprob_good, logprob_bad, sep) = mse_analysis(histstruct, mse_good_eval, mse_bad_eval, fitfunc)
     sys.stderr = orig_out
     
-    (logprob_threshold, f_measure, avSep) = evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBiasFactor)
+    (logprob_threshold, f_measure, avSep, sepPercB, sepPercG) = evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBiasFactor)
+
+    gpu_check()    
+
+    for j, autoencoder in enumerate(autoencoders):
+        autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
+    del(autoencoders)
     
     # Adding a penalty for unseparable autoencoders
     if(sep <= 0): sepFactor = 0.7
@@ -1036,71 +1210,67 @@ for i,histnames in enumerate(histlists):
     
     # Metric to determine how separable our dataset is
     separability = sepFactor*avSep
+
+    compare = (sepPercG + sepPercB) / 2
     
     # Empty list
-    dataPackage = [histnames, autoencoders, trainTime, separability, sep, f_measure, logprob_threshold]
-    if len(top50) < 1:
-        top50.append(dataPackage)
+    dataPackage = [histnames, i + 1, trainTime, sepPercG, sep, f_measure, logprob_threshold, separability, sepPercB]
+    if len(aeStats) < 1:
+        aeStats.append(dataPackage)
         print('New Best Model:')
         print(' - Train Time: ' + str(trainTime))
+        print(' - Separable Percent Bad: ' + str(sepPercB))
+        print(' - Separable Percent Good: ' + str(sepPercG))
         print(' - Separability: ' + str(separability))
         print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
         
-    # Partly full list
-    elif len(top50) < 50:
-        for j in range(len(top50) - 1, -1, -1):
-            if separability < top50[j][3]:
-                top50.insert(j+1, dataPackage)
+    # Non-empty List
+    else:
+        for j in range(len(aeStats) - 1, -1, -1):
+            if compare < (aeStats[j][3] + aeStats[j][8]) / 2:
+                aeStats.insert(j+1, dataPackage)
                 break
+            elif sepPercG == (aeStats[j][3] + aeStats[j][8]) / 2:
+                if separability < aeStats[j][7]:
+                     break
             # Reached end of list
             if j == 0:
-                top50.insert(j, dataPackage)
+                aeStats.insert(j, dataPackage)
                 print('New Best Model:')
                 print(' - Train Time: ' + str(trainTime))
+                print(' - Separable Percent Bad: ' + str(sepPercB))
+                print(' - Separable Percent Good: ' + str(sepPercG))
                 print(' - Separability: ' + str(separability))
                 print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
                
-    # Full list
-    elif separability > top50[49]:
-        for j in range(49, -1, -1):
-            if separability < top50[j][3]:
-                top50.insert(j+1, dataPackage)
-                break
-                
-            # Reached end of list
-            if j == 0:
-                top50.insert(j, dataPackage)
-                print('New Best Model:')
-                print(' - Train Time: ' + str(trainTime))
-                print(' - Separability: ' + str(separability))
-                print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
-            
-            
-        del top50[-1]
-    del(f_measure)
-    K.clear_session()
-    
     print()
-
-
-# In[35]:
-
-
-for list in top50:
-    print(list[2:])
-    autoencoders = list[1]
-    for j, autoencoder in enumerate(autoencoders):
-        autoencoder.save('../SavedModels/Permutations/Job' + str(i) + '/AE' + str(j))
+    return aeStats, numModels
 
 
 # In[ ]:
+def gpu_check():
+    usage = tf.config.experimental.get_memory_usage('GPU:0')
+    print('Using {} GB of GPU Memory'.format(usage / 1000000000.0))
+    if usage > 6000000000:
+        raise Exception('Excessive GPU Memory Usage!')
 
-
-
-
+### Main loop to iterate through possible histlists
+userfriendly = True
+aeStats = []
+numModels = 0
+sys.stdout = open('HistPerm.log' , 'w')
+for i,histnames in enumerate(histlists):
+    #tracemalloc.start()
+    (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct)
+    #snapshot = tracemalloc.take_snapshot()
+    #display_top(snapshot)
+    gc.collect()
+    K.clear_session()
 
 # In[ ]:
-
-
-
-
+df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time', 
+                                  'Separarable Percent Good', 'Worst Case Separation',
+                                  'F_measure', 'Working Point', 'Separability', 'Separable Percent Bad'])
+csvu.write_csv(df, 'Top50.csv')
+    
+sys.stdout.close()

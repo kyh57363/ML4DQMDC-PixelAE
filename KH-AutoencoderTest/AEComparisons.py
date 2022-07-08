@@ -782,7 +782,7 @@ userfriendly = True
 ### Data Controls and Selection - 1D Autoncoder
 
 # The directory data is located in
-datadir = '../data/'
+datadir = 'root://eoscms.cern.ch//user/khowey/SWAN_projects/ML4DQMDC-PixelAE/data'
 
 # Select a list of good runs to train on in development training_mode
 # Should be validated by eye
