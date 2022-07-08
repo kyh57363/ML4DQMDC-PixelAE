@@ -386,17 +386,17 @@ trainrunsls = {'2017B':{
                       "300364":[[-1]],
                  },'2017E': {
                       #                   "303819":[[-1]],
-#                   "303999":[[-1]],
-#                   "304119":[[-1]],
-#                   "304120":[[-1]],
-#                   "304197":[[-1]],
+                    "303999":[[-1]],
+                    "304119":[[-1]],
+                    "304120":[[-1]],
+                    "304197":[[-1]],
                     "304505":[[-1]],
                     "304198":[[-1]],
-                    "304199":[[-1]],
-                    "304209":[[-1]],
-                    "304333":[[-1]],
-                    "304446":[[-1]],
-                    "304449":[[-1]],
+#                    "304199":[[-1]],
+#                    "304209":[[-1]],
+#                    "304333":[[-1]],
+#                    "304446":[[-1]],
+#                    "304449":[[-1]],
                     "304452":[[-1]],
                     "304508":[[-1]],
                     "304625":[[-1]],
@@ -520,18 +520,18 @@ goodrunsls = {'2017B':{
 #                      "300539":[[-1]],
 #                      "300364":[[-1]],
                 },'2017E':{
-                    "303819":[[-1]],
-                    "303999":[[-1]],
-                    "304119":[[-1]],
-                    "304120":[[-1]],
+#                    "303819":[[-1]],
+#                    "303999":[[-1]],
+#                    "304119":[[-1]],
+#                    "304120":[[-1]],
 #                    "304197":[[-1]],
 #                    "304505":[[-1]],
 #                    "304198":[[-1]],
-#                    "304199":[[-1]],
-#                    "304209":[[-1]],
-#                    "304333":[[-1]],
-#                    "304446":[[-1]],
-#                    "304449":[[-1]],
+                    "304199":[[-1]],
+                    "304209":[[-1]],
+                    "304333":[[-1]],
+                    "304446":[[-1]],
+                    "304449":[[-1]],
 #                    "304452":[[-1]],
 #                    "304508":[[-1]],
 #                    "304625":[[-1]],
@@ -818,11 +818,11 @@ def define_concatamash_autoencoder(histstruct):
             # Defining layers
             conc_layer = Concatenate()(Input_layers)
             encoder = Dense(arch * 2, activation="tanh")(conc_layer)
+            encoder = Dense(arch/2, activation='relu')(encoder)
             encoder = Dense(arch/8, activation='relu')(encoder)
-            
             encoder = Dense(arch/16, activation='relu')(encoder)
-            
             decoder = Dense(arch/8, activation="relu")(encoder)
+            decoder = Dense(arch/2, activation='relu')(encoder)
             decoder = Dense(arch * 2, activation="tanh")(decoder)
             
             Output_layers=[Dense(input_dim, activation="tanh")(decoder) for i in range(X_train.shape[1])]
@@ -1210,30 +1210,29 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
     
     # Metric to determine how separable our dataset is
     separability = sepFactor*avSep
+
+    compare = (sepPercG + sepPercB) / 2
     
     # Empty list
-    dataPackage = [histnames, i + 1, trainTime, sepPercB, sep, f_measure, logprob_threshold, separability, sepPercG]
+    dataPackage = [histnames, i + 1, trainTime, sepPercG, sep, f_measure, logprob_threshold, separability, sepPercB]
     if len(aeStats) < 1:
         aeStats.append(dataPackage)
         print('New Best Model:')
         print(' - Train Time: ' + str(trainTime))
         print(' - Separable Percent Bad: ' + str(sepPercB))
         print(' - Separable Percent Good: ' + str(sepPercG))
+        print(' - Separability: ' + str(separability))
         print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
         
     # Non-empty List
     else:
         for j in range(len(aeStats) - 1, -1, -1):
-            if sepPercB < aeStats[j][3]:
+            if compare < (aeStats[j][3] + aeStats[j][8]) / 2:
                 aeStats.insert(j+1, dataPackage)
                 break
-            elif sepPercB == aeStats[j][3]:
-                if sepPercG < aeStats[j][8]:
-                    aeStats.insert(j+1, dataPackage)
-                    break
-                if sepPercG == aeStats[j][8]:
-                    if separability < aeStats[j][7]:
-                        break
+            elif sepPercG == (aeStats[j][3] + aeStats[j][8]) / 2:
+                if separability < aeStats[j][7]:
+                     break
             # Reached end of list
             if j == 0:
                 aeStats.insert(j, dataPackage)
@@ -1241,6 +1240,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
                 print(' - Train Time: ' + str(trainTime))
                 print(' - Separable Percent Bad: ' + str(sepPercB))
                 print(' - Separable Percent Good: ' + str(sepPercG))
+                print(' - Separability: ' + str(separability))
                 print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
                
     print()
@@ -1269,8 +1269,8 @@ for i,histnames in enumerate(histlists):
 
 # In[ ]:
 df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time', 
-                                  'Separarable Percent Bad', 'Worst Case Separation',
-                                  'F_measure', 'Working Point', 'Separability', 'Separable Percent Good'])
+                                  'Separarable Percent Good', 'Worst Case Separation',
+                                  'F_measure', 'Working Point', 'Separability', 'Separable Percent Bad'])
 csvu.write_csv(df, 'Top50.csv')
     
 sys.stdout.close()
