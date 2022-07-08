@@ -1231,6 +1231,9 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
                 if sepPercG < aeStats[j][8]:
                     aeStats.insert(j+1, dataPackage)
                     break
+                if sepPercG == aeStats[j][8]:
+                    if separability < aeStats[j][7]:
+                        break
             # Reached end of list
             if j == 0:
                 aeStats.insert(j, dataPackage)
