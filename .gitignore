@@ -16,3 +16,4 @@ data/Complete_Runs
 *.data-00000-of-00001
 *.pb
 *.index
+*.log
