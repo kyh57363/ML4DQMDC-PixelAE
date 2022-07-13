@@ -1010,7 +1010,8 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
         compare = (sepPercG + sepPercB) / 2
         
         # Creating a debug file for assessing autoencoder postprocessing
-        debug = [mse_train, mse_good_eval, mse_bad_eval, logprob_good, logprob_bad, logprob_threshold]
+        debug = []
+        debug.append([mse_train, mse_good_eval, mse_bad_eval, logprob_good, logprob_bad, logprob_threshold])
         df = pd.DataFrame(debug, columns=['TrainMSE', 'GoodMSE', 'BadMSE', 'LPGood', 'LPBad', 'LPThreshold'])
         csvu.write_csv(df, 'Debug.csv')
 
@@ -1057,9 +1058,10 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
                     print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
                 
         print()
-    except:
+    except Exception as e:
         print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
         print('ERROR encountered in job.. continuing ' + str(i+1))
+        print(e)
         aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
     return aeStats, numModels
 
