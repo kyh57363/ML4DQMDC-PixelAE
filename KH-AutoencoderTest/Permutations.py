@@ -508,7 +508,7 @@ failedruns = {}
 failedls ={}
 # Unpack histnames and add every histogram individually
 consistent = True
-#sys.stdout = open('HistPerm.log' , 'w')
+sys.stdout = open('HistPerm.log' , 'w')
 for era in eras:
     for histnamegroup in histnames:
         for histname in histnamegroup:
@@ -541,7 +541,7 @@ for era in eras:
             
 sys.stdout.write('\rData import complete.')
 sys.stdout.flush()
-#sys.stdout.close()
+sys.stdout.close()
 
 # In[86]:
 
@@ -1061,19 +1061,17 @@ def gpu_check():
 userfriendly = True
 aeStats = []
 numModels = 0
-#sys.stdout = open('HistPerm.log' , 'w')
+sys.stdout = open('HistPerm.log' , 'w')
 for i,histnames in enumerate(histlists):
     #tracemalloc.start()
     (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct)
     #snapshot = tracemalloc.take_snapshot()
     #display_top(snapshot)
+    df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time',
+                                   'Separable Percent Good', 'Worst Case Separation',
+                                   'F_measure', 'Working Point', 'Separability', 'Separable Percent Bad'])
+    csvu.write_csv(df, 'Top50.csv')
     gc.collect()
     K.clear_session()
 
-# In[ ]:
-df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time', 
-                                  'Separable Percent Good', 'Worst Case Separation',
-                                  'F_measure', 'Working Point', 'Separability', 'Separable Percent Bad'])
-csvu.write_csv(df, 'Top50.csv')
-    
-#sys.stdout.close()
+sys.stdout.close()
