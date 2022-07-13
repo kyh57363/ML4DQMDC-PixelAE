@@ -74,216 +74,12 @@ datadir = '../data/' + year + era + '/'
 
 # select a list of good runs to test on in development training_mode
 # should be validated by eye
-goodrunsls = {'2017B':{
-                    "297057":[[-1]], 
-                    "297099":[[-1]], 
-                    "297101":[[-1]],
-                    "297113":[[-1]], 
-                    "297114":[[-1]], 
-                    "297175":[[-1]],   # A decently clean histogram
-                    "297177":[[-1]],
-                    "297179":[[-1]], 
-                    "297215":[[-1]],
-                    "297218":[[-1]],
-                    "297225":[[-1]],
-                    "297296":[[-1]], 
-                    "297411":[[-1]],
-                    "297426":[[-1]],  
-                    "297431":[[-1]],
-                    "297434":[[-1]], 
-                    "297468":[[-1]],
-                    "297483":[[-1]],
-                    "297486":[[-1]],
-                    "297503":[[-1]],
-                    "297557":[[-1]],
-                    "297598":[[-1]],
-                    "297604":[[-1]],   # A decently clean histogram
-                    "297620":[[-1]],   # A decently clean histogram
-                    "297659":[[-1]],   # An okay histogram
-                    "297670":[[-1]],   # A decently clean histogram
-                    "297674":[[-1]],
-                    "297678":[[-1]],   # A particularly messy histogram
-                    "297722":[[-1]],   # A decently clean histogram
-                    "298997":[[-1]],
-                    "299061":[[-1]],
-                    "299065":[[-1]],   # A decently clean histogram
-                    "299067":[[-1]],   # A decently clean histogram
-                    "299096":[[-1]],
-                    "299149":[[-1]],
-                    "299178":[[-1]],   # A decently clean histogram
-                    "299184":[[-1]],   # A particularly messy histogram
-                    "299185":[[-1]],   # A decently clean histogram
-                    "299327":[[-1]],
-                    "299329":[[-1]], 
-                    "299480":[[-1]]    # A decently clean histogram
-                },'2017C':{
-                    "299370":[[-1]],
-                    "299394":[[-1]],
-                    "299420":[[-1]],
-                    "299477":[[-1]],
-                    "299593":[[-1]],
-                    "299597":[[-1]],
-                    "299617":[[-1]],
-                    "300018":[[-1]],
-                    "300105":[[-1]],
-                    "300117":[[-1]],
-                    "300124":[[-1]],
-                    "300234":[[-1]],
-                    "300237":[[-1]],
-                    "300240":[[-1]],
-                    "300370":[[-1]],
-                    "300157":[[-1]],
-                    "300373":[[-1]],
-                    "300392":[[-1]],
-                    "300395":[[-1]],
-                    "300401":[[-1]],
-                    "300462":[[-1]],
-                    "300466":[[-1]],
-                    "300514":[[-1]],
-                    "300517":[[-1]],
-                    "300538":[[-1]],
-                    "300539":[[-1]],
-                    "300364":[[-1]],
-                },'2017E':{
-                    "303819":[[-1]],
-                    "303999":[[-1]],
-                    "304119":[[-1]],
-                    "304120":[[-1]],
-                    "304197":[[-1]],
-                    "304505":[[-1]],
-                    "304198":[[-1]],
-                    "304199":[[-1]],
-                    "304209":[[-1]],
-                    "304333":[[-1]],
-                    "304446":[[-1]],
-                    "304449":[[-1]],
-                    "304452":[[-1]],
-                    "304508":[[-1]],
-                    "304625":[[-1]],
-                    "304655":[[-1]],
-                    "304737":[[-1]],
-                    "304778":[[-1]],
-                    "306459":[[-1]],
-                    "304196":[[-1]],
-                },'2017F':{
-                    "305310":[[-1]],
-                    "305040":[[-1]],
-                    "305043":[[-1]],
-                    "305185":[[-1]],
-                    "305204":[[-1]],
-                    "305234":[[-1]],
-                    "305247":[[-1]],
-                    "305313":[[-1]],
-                    "305338":[[-1]],
-                    "305350":[[-1]],
-                    "305364":[[-1]],
-                    "305376":[[-1]],
-                    "306042":[[-1]],
-                    "306051":[[-1]],
-                    "305406":[[-1]],
-                    "306122":[[-1]],
-                    "306134":[[-1]],
-                    "306137":[[-1]],
-                    "306154":[[-1]],
-                    "306170":[[-1]],
-                    "306417":[[-1]],
-                    "306432":[[-1]],
-                    "306456":[[-1]],
-                    "305516":[[-1]],
-                    "305586":[[-1]],
-                    "305588":[[-1]],
-                    "305590":[[-1]],
-                    "305809":[[-1]],
-                    "305832":[[-1]],
-                    "305840":[[-1]],
-                    "305898":[[-1]],
-                    "306029":[[-1]],
-                    "306037":[[-1]],
-                    "306095":[[-1]],
-                },
-                '2018':{ # needs to be re-checked, not guaranteed to be fully correct or representative.   
-                    "315267":[[-1]] 
-              }
+goodrunsls = {
+    
 }
+badrunsls = {
 
-
-badrunsls = {'2017B':
-                {
-                    #"297048":[[-1]],
-                    #"297282":[[-1]],
-                    #"297283":[[-1]],
-                    #"297284":[[-1]],
-                    #"297287":[[-1]],
-                    #"297288":[[-1]],
-                    #"297289":[[-1]],
-                    "299316":[[-1]],
-                    "299317":[[-1]],
-                    "299318":[[-1]],
-                    "299324":[[-1]],
-                    "299326":[[-1]],
-                    #"301086":[[88,126]],
-                    #"301086":[[89,89]],
-                    #"303948":[[1710,1710]],
-                    "297047":[[-1]], #close but, true bad for all 8
-                    "297169":[[-1]], #true bad for all 8
-#                   "297211":[[-1]], #Reconstructs well
-#                   "299325":[[-1]], #Reconstructs well
-                    "297664":[[-1]], #true bad for all 8
-                    "299317":[[-1]], #true bad for all 8
-                    "297169":[[-1]], #true bad for all 8
-#                   "297502":[[-1]]
-                },
-             '2017C':{
-                "300079":[[-1]],
-                "300282":[[-1]],
-                "300389":[[-1]],
-                "300398":[[-1]],
-                 
-                 
-#                 "300781":[[-1]], # bad for tracking (pixels were excluded.
-#                 "300079":[[-1]], # is bad for strips and then also for tracking
-#                 "302029":[[-1]], # Poor detector elements for strips - Should be mildly anomalous, but technically good 
-#                 "300576":[[-1]], # Poor detector elements for strips - Should be mildly anomalous, but technically good
-#                 "300574":[[-1]], # Poor detector elements for strips - Should be mildly anomalous, but technically good
-#                 "300282":[[-1]], # Poor detector elements for strips - Should be mildly anomalous, but technically good
-#                 "301912":[[-1]], # Half bad for pixels (lost HV or readout card)  
-#                 "301086":[[-1]], # Half bad for pixels (lost HV or readout card)  
-#                 "300283":[[-1]], # Half bad for pixels (lost HV or readout card) 
-#                 "300282":[[-1]], # Half bad for pixels (lost HV or readout card) 
-#                 "300281":[[-1]], # Half bad for pixels (lost HV or readout card) 
-#                 "300239":[[-1]], # Half bad for pixels (lost HV or readout card)
-#                 "301394":[[-1]], # Marginal for pixels
-#                 "301183":[[-1]], # Marginal for pixels
-#                 "300398":[[-1]], # Marginal for pixels
-#                 "300389":[[-1]], # Marginal for pixels
-#                 "300365":[[-1]]  # Marginal for pixels
-              },
-             '2017E':{
-                 "304740":[[-1]], # Bad for pixels and tracking - holes in PXLayer 1
-                 "304776":[[-1]], # Bad for pixels and tracking - holes in PXLayer 1
-#                 "304506":[[-1]], # Portcard problem for pixels
-#                 "304507":[[-1]], # Portcard problem for pixels 
-#                 "303989":[[-1]], # Bad for pixels, power supply died
-                 "303824":[[-1]]  # Partly bad for strips due to a test
-             },
-             '2017F':{
-                 "306422":[[-1]], # Partly bad for strips - 2 data readouts failed 
-#                 "306423":[[-1]], # Partly bad for strips - 2 data readouts failed
-#                 "306425":[[-1]], # Partly bad for strips - 2 data readouts failed
-#                 "305440":[[-1]], # Partly bad for strips - 1 data readout failed
-#                 "305441":[[-1]], # Partly bad for strips - 1 data readout failed
-                 "305249":[[-1]], # Bad for pixels - half of disk failed 
-                 "305250":[[-1]], # Bad for pixels - half of disk failed
-#                 "305064":[[-1]], # Marginal for pixels - some readout failed
-             },
-            '2018': # needs to be re-checked, not guaranteed to be fully correct or representative.
-                {
-                #"317479":[[-1]],
-                "317480":[[-1]],
-                "317481":[[-1]],
-                "317482":[[-1]],
-                #"319847":[[1,35]]
-            }}
+}
 
 # Create a list of histograms to include
 # Pair histograms to be combined on the same line
@@ -306,10 +102,10 @@ wpBiasFactor = 2
 # Select runs to be used in training from the user-defined list
 runsls_training = {}
 # Select bad runs to test on in the user-defined list
-runsls_bad = badrunsls[year + era]
+runsls_bad = badrunsls
 # Select good runs to test on in the user-defined list
 runsls_good = {}
-for i,run in enumerate(goodrunsls[year + era]):
+for i,run in enumerate(goodrunsls):
     if i < 5:
         runsls_good[run] = [[-1]]
     else:
@@ -551,8 +347,14 @@ def evaluate_models_train(histstruct):
 
 ### Plots and Distribution Analysis
 def fit_mse_distribution(histstruct, mse_train):
+
+    df = pd.DataFrame(mse_train)
+    csvu.write_csv(df, 'deBug.csv')
+
     dimslist = []
     fitfunclist = []
+
+    df = pd.DataFrame(aeStats )
     
     
     nhisttypes = len(histstruct.histnames)
@@ -868,11 +670,11 @@ for i,trainlist in enumerate(trainlists):
     (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct, trainlist)
     #snapshot = tracemalloc.take_snapshot()
     #display_top(snapshot)
+    df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time', 
+                                  'Separable Percent Good', 'Worst Case Separation',
+                                  'F_measure', 'Working Point', 'Separability', 'Separable Percent Bad', 'Working Point'])
+    csvu.write_csv(df, 'Top50.csv')
     gc.collect()
     K.clear_session()
 
 # In[ ]:
-df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time', 
-                                  'Separable Percent Good', 'Worst Case Separation',
-                                  'F_measure', 'Working Point', 'Separability', 'Separable Percent Bad', 'Working Point'])
-csvu.write_csv(df, 'Top50.csv')

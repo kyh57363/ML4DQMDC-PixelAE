@@ -210,14 +210,12 @@ def rm_duplicates(df):
     
     list1 = []
     for i in range(len(df)):
-        hist = np.array(json.loads(df.at[i,'histo']))
         
         ls = int(df.at[i,'fromlumi'])
         run = int(df.at[i, 'fromrun'])
         
         # Don't overrun the dataframe
         if i < len(df) - 1: 
-            nextHist = hist = np.array(json.loads(df.at[i + 1,'histo']))
             nextls = int(df.at[i + 1,'fromlumi'])
             nextrun = int(df.at[i + 1, 'fromrun'])
             
