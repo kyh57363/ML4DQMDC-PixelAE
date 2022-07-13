@@ -954,85 +954,82 @@ def display_top(snapshot, key_type='lineno', limit=3):
 
 ### Loop it Fxn
 def masterLoop(aeStats, numModels, histnames, histstruct):
-    percComp = (numModels/conmodelcount)*100
-    print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
-    
-    # Update histlist to reflect new data
-    histstruct.reset_histlist(histnames, suppress=True)
-    assignMasks(histstruct, runsls_training, runsls_good, runsls_bad)
-    
-    # Build autoencoders based on new data
-    (histslist, vallist, autoencoders, train_normhist) = define_concatamash_autoencoder(histstruct)
-    
-    # Train autoencoders based on current histlist and record speed
-    start = time.perf_counter()
-    
-    # Suppres Unhelpful Error Messages
-    orig_out = sys.stderr
-    sys.stderr = open('trash', 'w')
-    autoencoders = train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders)
-    sys.stderr = orig_out
-    
-    numModels += len(autoencoders)
-    
-    stop = time.perf_counter()
-    trainTime = stop - start
-    
-    sys.stdout.write('\rTraining complete in ' + str(trainTime) + ' seconds')
-    sys.stdout.flush()
-    print()
-    
-    # Evaluate models
-    (mse_train, mse_good_eval, mse_bad_eval) = evaluate_models_train(histstruct)
-    fitfunc = fit_mse_distribution(histstruct, mse_train)
-    
-    orig_out = sys.stderr
-    sys.stderr = open('trash', 'w')
-    (logprob_good, logprob_bad, sep) = mse_analysis(histstruct, mse_good_eval, mse_bad_eval, fitfunc)
-    sys.stderr = orig_out
-    
-    (logprob_threshold, f_measure, avSep, sepPercB, sepPercG) = evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBiasFactor)
-
-    gpu_check()    
-
-    for j, autoencoder in enumerate(autoencoders):
-        autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
-    del(autoencoders)
-    
-    # Adding a penalty for unseparable autoencoders
-    if(sep <= 0): sepFactor = 0.7
-    else: sepFactor = 1
-    
-    # Metric to determine how separable our dataset is
-    separability = sepFactor*avSep
-
-    compare = (sepPercG + sepPercB) / 2
-    
-    # Empty list
-    dataPackage = [histnames, i + 1, trainTime, sepPercG, sep, f_measure, logprob_threshold, separability, sepPercB]
-    if len(aeStats) < 1:
-        aeStats.append(dataPackage)
-        print('New Best Model:')
-        print(' - Train Time: ' + str(trainTime))
-        print(' - Separable Percent Bad: ' + str(sepPercB))
-        print(' - Separable Percent Good: ' + str(sepPercG))
-        print(' - Separability: ' + str(separability))
-        print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
+    try:
+        percComp = (numModels/conmodelcount)*100
+        print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
         
-    # Non-empty List
-    else:
-        for j in range(len(aeStats) - 1, -1, -1):
-            if compare < (aeStats[j][3] + aeStats[j][8]) / 2:
-                aeStats.insert(j+1, dataPackage)
-                print('Model Position: ' + str(j))
-                print(' - Train Time: ' + str(trainTime))
-                print(' - Separable Percent Bad: ' + str(sepPercB))
-                print(' - Separable Percent Good: ' + str(sepPercG))
-                print(' - Separability: ' + str(separability))
-                print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
-                break
-            elif sepPercG == (aeStats[j][3] + aeStats[j][8]) / 2:
-                if separability < aeStats[j][7]:
+        # Update histlist to reflect new data
+        histstruct.reset_histlist(histnames, suppress=True)
+        assignMasks(histstruct, runsls_training, runsls_good, runsls_bad)
+        
+        # Build autoencoders based on new data
+        (histslist, vallist, autoencoders, train_normhist) = define_concatamash_autoencoder(histstruct)
+        
+        # Train autoencoders based on current histlist and record speed
+        start = time.perf_counter()
+        
+        # Suppres Unhelpful Error Messages
+        orig_out = sys.stderr
+        sys.stderr = open('trash', 'w')
+        autoencoders = train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders)
+        sys.stderr = orig_out
+        
+        numModels += len(autoencoders)
+        
+        stop = time.perf_counter()
+        trainTime = stop - start
+        
+        sys.stdout.write('\rTraining complete in ' + str(trainTime) + ' seconds')
+        sys.stdout.flush()
+        print()
+        
+        # Evaluate models
+        (mse_train, mse_good_eval, mse_bad_eval) = evaluate_models_train(histstruct)
+        fitfunc = fit_mse_distribution(histstruct, mse_train)
+        
+        orig_out = sys.stderr
+        sys.stderr = open('trash', 'w')
+        (logprob_good, logprob_bad, sep) = mse_analysis(histstruct, mse_good_eval, mse_bad_eval, fitfunc)
+        sys.stderr = orig_out
+        
+        (logprob_threshold, f_measure, avSep, sepPercB, sepPercG) = evaluate_autoencoders_combined(logprob_good, logprob_bad, fmBiasFactor, wpBiasFactor)
+
+        gpu_check()    
+
+        for j, autoencoder in enumerate(autoencoders):
+            autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
+        del(autoencoders)
+        
+        # Adding a penalty for unseparable autoencoders
+        if(sep <= 0): sepFactor = 0.7
+        else: sepFactor = 1
+        
+        # Metric to determine how separable our dataset is
+        separability = sepFactor*avSep
+
+        compare = (sepPercG + sepPercB) / 2
+        
+        # Creating a debug file for assessing autoencoder postprocessing
+        debug = [mse_train, mse_good_eval, mse_bad_eval, logprob_good, logprob_bad, logprob_threshold]
+        df = pd.DataFrame(debug, columns=['TrainMSE', 'GoodMSE', 'BadMSE', 'LPGood', 'LPBad', 'LPThreshold'])
+        csvu.write_csv(df, 'Debug.csv')
+
+        # Empty list
+        dataPackage = [histnames, i + 1, trainTime, sepPercG, sep, f_measure, logprob_threshold, separability, sepPercB]
+        if len(aeStats) < 1:
+            aeStats.append(dataPackage)
+            print('New Best Model:')
+            print(' - Train Time: ' + str(trainTime))
+            print(' - Separable Percent Bad: ' + str(sepPercB))
+            print(' - Separable Percent Good: ' + str(sepPercG))
+            print(' - Separability: ' + str(separability))
+            print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
+            
+        # Non-empty List
+        else:
+            for j in range(len(aeStats) - 1, -1, -1):
+                if compare < (aeStats[j][3] + aeStats[j][8]) / 2:
+                    aeStats.insert(j+1, dataPackage)
                     print('Model Position: ' + str(j))
                     print(' - Train Time: ' + str(trainTime))
                     print(' - Separable Percent Bad: ' + str(sepPercB))
@@ -1040,17 +1037,30 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
                     print(' - Separability: ' + str(separability))
                     print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
                     break
-            # Reached end of list
-            if j == 0:
-                aeStats.insert(j, dataPackage)
-                print('New Best Model:')
-                print(' - Train Time: ' + str(trainTime))
-                print(' - Separable Percent Bad: ' + str(sepPercB))
-                print(' - Separable Percent Good: ' + str(sepPercG))
-                print(' - Separability: ' + str(separability))
-                print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
-               
-    print()
+                elif sepPercG == (aeStats[j][3] + aeStats[j][8]) / 2:
+                    if separability < aeStats[j][7]:
+                        print('Model Position: ' + str(j))
+                        print(' - Train Time: ' + str(trainTime))
+                        print(' - Separable Percent Bad: ' + str(sepPercB))
+                        print(' - Separable Percent Good: ' + str(sepPercG))
+                        print(' - Separability: ' + str(separability))
+                        print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
+                        break
+                # Reached end of list
+                if j == 0:
+                    aeStats.insert(j, dataPackage)
+                    print('New Best Model:')
+                    print(' - Train Time: ' + str(trainTime))
+                    print(' - Separable Percent Bad: ' + str(sepPercB))
+                    print(' - Separable Percent Good: ' + str(sepPercG))
+                    print(' - Separability: ' + str(separability))
+                    print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
+                
+        print()
+    except:
+        print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
+        print('ERROR encountered in job.. continuing ' + str(i+1))
+        aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
     return aeStats, numModels
 
 
