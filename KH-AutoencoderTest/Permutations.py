@@ -997,9 +997,6 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
 
     for j, autoencoder in enumerate(autoencoders):
         autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
-        model_json = autoencoder.to_json()
-        with open('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j) + '.json', "w") as json_file:
-            json_file.write(model_json)
     del(autoencoders)
     
     # Adding a penalty for unseparable autoencoders
