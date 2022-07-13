@@ -38,6 +38,7 @@ session = InteractiveSession(config=config)
 
 # local modules
 sys.path.append('../utils')
+sys.path.append('./utils')
 import csv_utils as csvu
 import json_utils as jsonu
 import dataframe_utils as dfu
@@ -55,8 +56,11 @@ importlib.reload(pu)
 importlib.reload(gdu)
 importlib.reload(rru)
 sys.path.append('../src')
+sys.path.append('./src')
 sys.path.append('../src/classifiers')
+sys.path.append('./src/classifiers')
 sys.path.append('../src/cloudfitters')
+sys.path.append('./src/cloudfitters')
 import HistStruct
 importlib.reload(HistStruct)
 import FlexiStruct
@@ -991,9 +995,12 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
 
     gpu_check()    
 
-    #for j, autoencoder in enumerate(autoencoders):
-    #    autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
-    #del(autoencoders)
+    for j, autoencoder in enumerate(autoencoders):
+        autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
+        model_json = autoencoder.to_json()
+        with open('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j) + '.json', "w") as json_file:
+            json_file.write(model_json)
+    del(autoencoders)
     
     # Adding a penalty for unseparable autoencoders
     if(sep <= 0): sepFactor = 0.7
