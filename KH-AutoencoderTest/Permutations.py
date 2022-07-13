@@ -658,7 +658,7 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
         
         ## Model parameters
         nb_epoch = 1000
-        batch_size = 10000
+        batch_size = 500
         
         #checkpoint_filepath = 'checkpoint'
         #model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
