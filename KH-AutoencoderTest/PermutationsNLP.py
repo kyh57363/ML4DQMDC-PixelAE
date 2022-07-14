@@ -845,6 +845,8 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
     accuracy = (tp + tn) / (tp + fp + tn + fn)
     precision = tp / (tp + fp)
     recall = tp / (tp + fn)
+    if np.isnan(precision): precision = 0
+    if np.isnan(recall): recall = 0
     f_measure = (1 + fmBiasFactor * fmBiasFactor) * ((precision * recall) / ((fmBiasFactor * fmBiasFactor * precision) + recall)) 
     
     return f_measure
@@ -975,7 +977,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
         # Creating a debug file for assessing autoencoder postprocessing
         debug = []
         debug.append([mse_train, mse_good_eval, mse_bad_eval, wpData])
-        df = pd.DataFrame(debug, columns=['TrainMSE', 'GoodMSE', 'BadMSE', 'LPGood', 'LPBad', 'LPThreshold'])
+        df = pd.DataFrame(debug)
         csvu.write_csv(df, 'Debug.csv')
 
         # Empty list
@@ -1051,9 +1053,7 @@ for i,histnames in enumerate(histlists):
     (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct)
     #snapshot = tracemalloc.take_snapshot()
     #display_top(snapshot)
-    df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time',
-                                   'Separable Percent Good', 'Worst Case Separation',
-                                   'F_measure', 'Working Point', 'Separability', 'Separable Percent Bad'])
+    df = pd.DataFrame(aeStats, columns=['Histnames', 'Job', 'Train Time', 'Average Separation', 'F_Measure'])
     csvu.write_csv(df, 'Top50.csv')
     gc.collect()
     K.clear_session()
