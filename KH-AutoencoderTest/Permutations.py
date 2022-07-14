@@ -24,9 +24,9 @@ from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from tensorflow import keras
 from keras import backend as K
-from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Input, Dense, Concatenate
-from tensorflow.keras.models import Model, Sequential, load_model
+from tensorflow.keras.models import Model
 import importlib
 
 # Necessary to keep GPU usage to a minimum
@@ -79,7 +79,7 @@ importlib.reload(HyperRectangleFitter)
 
 # In[74]:
 
-
+# Data selection
 year = '2017'
 eras = ['E', 'F']
 
@@ -90,7 +90,7 @@ for era in eras:
 
 # In[75]:
 
-
+# Histogram type selection
 blk1Vars = ['chargeInner', 'chargeOuter', 'adc', 'size']
 blk2Vars = ['NormalizedHitResiduals', 
             'Summary_ClusterStoNCorr__OnTrack_',
@@ -1040,7 +1040,8 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
                     break
                 elif sepPercG == (aeStats[j][3] + aeStats[j][8]) / 2:
                     if separability < aeStats[j][7]:
-                        print('Model Position: ' + str(j))
+                        aeStats.insert(j+1, dataPackage)
+                        print('Model Position: ' + str(j + 1))
                         print(' - Train Time: ' + str(trainTime))
                         print(' - Separable Percent Bad: ' + str(sepPercB))
                         print(' - Separable Percent Good: ' + str(sepPercG))
