@@ -848,7 +848,8 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
     if np.isnan(precision): precision = 0
     if np.isnan(recall): recall = 0
     f_measure = (1 + fmBiasFactor * fmBiasFactor) * ((precision * recall) / ((fmBiasFactor * fmBiasFactor * precision) + recall)) 
-    
+    if np.isnan(f_measure): f_measure = 0
+
     return f_measure
 
 # In[94]:
