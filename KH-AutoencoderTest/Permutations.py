@@ -28,6 +28,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Input, Dense, Concatenate
 from tensorflow.keras.models import Model
 import importlib
+import psutil
 
 # Necessary to keep GPU usage to a minimum
 from tensorflow.compat.v1 import ConfigProto
@@ -1071,10 +1072,13 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
 def gpu_check():
     # Prevents crashing on CPU only runs
     if len(tf.config.list_physical_devices('GPU')) < 1:
+        if (psutil.virutal_memory([1]) / psutil.virutal_memory([0])) < 0.05:
+            raise Exception('Excessive RAM Usage!')
         return
-    usage = tf.config.experimental.get_memory_usage('GPU:0')
-    print('Using {} GB of GPU Memory'.format(usage / 1000000000.0))
-    if usage > 6000000000:
+    # Get peak memory usage of GPU
+    usage = tf.config.experimental.get_memory_info('GPU:0')
+    print('Using {} GB of GPU Memory'.format(usage['peak'] / 1000000000.0))
+    if usage['peak'] > 7000000000.0:
         raise Exception('Excessive GPU Memory Usage!')
 
 ### Main loop to iterate through possible histlists
