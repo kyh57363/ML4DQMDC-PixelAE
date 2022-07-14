@@ -1034,7 +1034,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
 def gpu_check():
     # Prevents crashing on CPU only runs
     if len(tf.config.list_physical_devices('GPU')) < 1:
-        if (psutil.virtual_memory([1]) / psutil.virtual_memory([0])) < 0.15:
+        if (psutil.virtual_memory()[1] / psutil.virtual_memory()[0]) < 0.15:
             raise MemoryError('Excessive RAM Usage!')
         return
     # Get peak memory usage of GPU
