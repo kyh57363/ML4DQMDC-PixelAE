@@ -805,6 +805,8 @@ def fit_mse_distribution(mse_good, mse_bad_list, wpBiasFactor):
 
 
 ### Prepare MSEs for Working Point Definition
+# - Note: This test is geared towards testing. Updates are required
+#       for use with unlabeled data
 def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_split):
     workingPoints = wpData[0]
     
@@ -826,7 +828,7 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
         if np.sum(values) > (testWeight/100) * len(lumi):
             preds_good[i] = 1
     
-    # Same, but with bad data
+    # Same, but with known bad data
     preds_bad = np.zeros(len(mse_bad_test))
     for i, lumi in enumerate(mse_bad_test):
         values = np.ones(len(lumi[lumi > workingPoints]))
@@ -850,7 +852,7 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
 # In[94]:
 
 
-def get_confusion_matrix(scores, labels, wp):
+def get_confusion_matrix(scores, labels):
     ### plot a confusion matrix
     # input arguments:
     # - scores and labels: defined in the same way as for get_roc
@@ -864,8 +866,8 @@ def get_confusion_matrix(scores, labels, wp):
     nback = np.sum(1-labels)
 
     # get confusion matrix entries
-    tp = np.sum(np.where((labels==1) & (scores>wp),1,0))/nsig
-    fp = np.sum(np.where((labels==0) & (scores>wp),1,0))/nback
+    tp = np.sum(np.where((labels==1) & (scores==1),1,0))/nsig
+    fp = np.sum(np.where((labels==0) & (scores==0),1,0))/nback
     tn = 1-fp
     fn = 1-tp
 
