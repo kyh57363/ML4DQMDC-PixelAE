@@ -1070,7 +1070,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
 # In[ ]:
 def gpu_check():
     # Prevents crashing on CPU only runs
-    if not tf.test.is_gpu_available():
+    if len(tf.config.list_physical_devices('GPU')) < 1:
         return
     usage = tf.config.experimental.get_memory_usage('GPU:0')
     print('Using {} GB of GPU Memory'.format(usage / 1000000000.0))
