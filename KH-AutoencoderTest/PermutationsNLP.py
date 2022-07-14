@@ -1014,26 +1014,32 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
                     print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
                 
         print()
+    except MemoryError as e:
+        print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
+        print('ERROR encountered in job {}. Exiting...'.format(i+1))
+        print(e)
+        aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
     except Exception as e:
         print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
-        print('ERROR encountered in job.. continuing ' + str(i+1))
+        print('ERROR encountered in job {}. Continuing...'.format(i+1))
         print(e)
         aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
     return aeStats, numModels
 
 
 # In[ ]:
+### Function to prevent exhausting shared resources
 def gpu_check():
     # Prevents crashing on CPU only runs
     if len(tf.config.list_physical_devices('GPU')) < 1:
-        if (psutil.virutal_memory([1]) / psutil.virutal_memory([0])) < 0.05:
-            raise Exception('Excessive RAM Usage!')
+        if (psutil.virtual_memory([1]) / psutil.virtual_memory([0])) < 0.15:
+            raise MemoryError('Excessive RAM Usage!')
         return
     # Get peak memory usage of GPU
     usage = tf.config.experimental.get_memory_info('GPU:0')
     print('Using {} GB of GPU Memory'.format(usage['peak'] / 1000000000.0))
     if usage['peak'] > 7000000000.0:
-        raise Exception('Excessive GPU Memory Usage!')
+        raise MemoryError('Excessive GPU Memory Usage!')
 
 ### Main loop to iterate through possible histlists
 userfriendly = True
