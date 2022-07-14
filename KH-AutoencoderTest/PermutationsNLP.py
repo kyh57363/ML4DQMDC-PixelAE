@@ -819,7 +819,7 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
     labels_bad = np.ones(len(mse_bad_test))
     
     # Percentage of histograms with issues to flag an anomaly
-    testWeight = 8
+    testWeight = 10
     # Check each histogram and if a sufficient number are anomalous, flag the lumisection
     anomalousList = []
     preds_good = np.zeros(len(mse_good_test))
