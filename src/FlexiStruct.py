@@ -38,6 +38,90 @@ class FlexiStruct( HistStruct.HistStruct ):
         
         super().__init__()
         histlist = []
+        
+    def add_dataframe( self, df, cropslices=None, rebinningfactor=None, 
+                        smoothinghalfwindow=None, smoothingweights=None,
+                        donormalize=True, standardbincount = 0):
+        ### add a dataframe to a HistStruct
+        # input arguments:
+        # - df: a pandas dataframe as read from the input csv files
+        # - cropslices: list of slices (one per dimension) by which to crop the histograms
+        # - rebinningfactor: factor by which to group bins together
+        # - smoothinghalfwindow: half window (int for 1D, tuple for 2D) for doing smoothing of histograms
+        # - smoothingweights: weight array (1D for 1D, 2D for 2D) for smoothing of histograms
+        # - donormalize: boolean whether to normalize the histograms
+        # - standardbincount: creates padded arrays for histograms with different bin counts to standardize for model training. 0 is default, which does not do any padding (normal HistStruct behavior)
+        # for more details on cropslices, rebinningfactor, smoothingwindow, smoothingweights
+        # and donormalize: see hist_utils.py!
+        # notes:
+        # - the new dataframe can contain one or multiple histogram types
+        # - the new dataframe must contain the same run and lumisection numbers (for each histogram type in it)
+        #   as already present in the HistStruct, except if it is the first one to be added
+        # - alternative to adding the dataframe with the options cropslices, donormalize and rebinningfactor
+        #   (that will be passed down to preparedatafromdf), one can also call preparedatafromdf manually and add it
+        #   with add_histograms, allowing for more control over complicated preprocessing.
+        
+        histnames = dfu.get_histnames(df)
+        # loop over all names in the dataframe
+        for i, histname in enumerate(histnames):
+            if histname in self.histnames:
+                print('WARNING: Histogram already in HistStruct. Error checking is disabled, so ensure histograms have same features.')
+            thisdf = dfu.select_histnames( df, [histname] )
+            # determine statistics (must be done before normalizing)
+            nentries = np.array(thisdf['entries'])
+            # get physical xmin and xmax
+            xmin = thisdf.at[0, 'Xmin']
+            xmax = thisdf.at[0, 'Xmax']
+            # prepare the data
+            (hists_all,runnbs_all,lsnbs_all) = hu.preparedatafromdf(thisdf,returnrunls=True,
+                                                cropslices=cropslices,
+                                                rebinningfactor=rebinningfactor,
+                                                smoothinghalfwindow=smoothinghalfwindow,
+                                                smoothingweights=smoothingweights,
+                                                donormalize=donormalize)
+            
+            # Get the length of the histograms and make sure they are all consistent for this type
+            histlen = 0
+            for i, hist in enumerate(hists_all):
+                if i == 0:
+                    histlen = len(hist)
+                else:
+                    if histlen != len(hist):
+                        raise Exception('ERROR in HistStruct.add_dataframe: histogram bin counts are not self-consistent!')
+            
+            # Make sure the standardbincount is valid if it is defined
+            if histlen > standardbincount and standardbincount > 0:
+                raise Exception('ERROR in HistStruct.add_dataframe: standardbincount must be greater than or equal to largest histogram bin count')
+            # Pad any histograms with too few bins
+            if histlen < standardbincount:
+                newHistList = np.zeros((len(hists_all), standardbincount))
+                for i, hist in enumerate(hists_all):
+                    for j, value in enumerate(hist):
+                        newHistList[i][j] = value
+            
+                hists_all = newHistList
+            
+            runnbs_all = runnbs_all.astype(int)
+            lsnbs_all = lsnbs_all.astype(int)
+            
+            # check consistency in run and lumisection numbers
+            if len(self.histnames)!=0:
+                if( not ( (runnbs_all==self.runnbs).all() and (lsnbs_all==self.lsnbs).all() ) ):
+                    raise Exception('ERROR in HistStruct.add_dataframe: dataframe run/lumi numbers are not consistent with current HistStruct!')
+            # add everything to the structure
+            if histname not in self.histnames:
+                self.runnbs = runnbs_all
+                self.lsnbs = lsnbs_all
+                self.histnames.append(histname)
+                self.histograms[histname] = hists_all
+                self.nentries[histname] = nentries
+                self.histranges[histname] = (xmin,xmax)
+            else:
+                self.runnbs.append(runnbs_all)
+                self.lsnbs.append(lsnbs_all)
+                self.histograms[histname] = np.concatenate((self.histograms[histname], hists_all))
+                self.nentries[histname].append(nentries)
+             
     
     def reset_histlist( self, histlist, suppress=False ):
         """Resets the histlist to preserve histograms but change substructure. Note this requires eliminating all stored classifiers and scores

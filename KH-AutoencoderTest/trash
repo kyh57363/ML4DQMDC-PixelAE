@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "/eos/home-k/khowey/SWAN_projects/ML4DQMDC-PixelAE/KH-AutoencoderTest/Permutations.py", line 1265, in <module>
+    (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct)
+  File "/eos/home-k/khowey/SWAN_projects/ML4DQMDC-PixelAE/KH-AutoencoderTest/Permutations.py", line 1178, in masterLoop
+    autoencoders = train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders)
+  File "/eos/home-k/khowey/SWAN_projects/ML4DQMDC-PixelAE/KH-AutoencoderTest/Permutations.py", line 888, in train_concatamash_autoencoder
+    train = autoencoder.fit(x=[X_train[:,i] for i in range(X_train.shape[1])],
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_101swan/x86_64-centos7-gcc8-opt/lib/python3.9/site-packages/tensorflow/python/keras/engine/training.py", line 1183, in fit
+    tmp_logs = self.train_function(iterator)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_101swan/x86_64-centos7-gcc8-opt/lib/python3.9/site-packages/tensorflow/python/eager/def_function.py", line 889, in __call__
+    result = self._call(*args, **kwds)
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_101swan/x86_64-centos7-gcc8-opt/lib/python3.9/site-packages/tensorflow/python/eager/def_function.py", line 917, in _call
+    return self._stateless_fn(*args, **kwds)  # pylint: disable=not-callable
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_101swan/x86_64-centos7-gcc8-opt/lib/python3.9/site-packages/tensorflow/python/eager/function.py", line 3023, in __call__
+    return graph_function._call_flat(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_101swan/x86_64-centos7-gcc8-opt/lib/python3.9/site-packages/tensorflow/python/eager/function.py", line 1960, in _call_flat
+    return self._build_call_outputs(self._inference_function.call(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_101swan/x86_64-centos7-gcc8-opt/lib/python3.9/site-packages/tensorflow/python/eager/function.py", line 591, in call
+    outputs = execute.execute(
+  File "/cvmfs/sft.cern.ch/lcg/views/LCG_101swan/x86_64-centos7-gcc8-opt/lib/python3.9/site-packages/tensorflow/python/eager/execute.py", line 59, in quick_execute
+    tensors = pywrap_tfe.TFE_Py_Execute(ctx._handle, device_name, op_name,
+KeyboardInterrupt
