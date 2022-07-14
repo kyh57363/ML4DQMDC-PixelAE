@@ -1031,7 +1031,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
             for j in range(len(aeStats) - 1, -1, -1):
                 if compare < (aeStats[j][3] + aeStats[j][8]) / 2:
                     aeStats.insert(j+1, dataPackage)
-                    print('Model Position: ' + str(j))
+                    print('Model Position: ' + str(j + 1))
                     print(' - Train Time: ' + str(trainTime))
                     print(' - Separable Percent Bad: ' + str(sepPercB))
                     print(' - Separable Percent Good: ' + str(sepPercG))
