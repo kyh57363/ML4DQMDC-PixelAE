@@ -1017,8 +1017,8 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
     except MemoryError as e:
         print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
         print('ERROR encountered in job {}. Exiting...'.format(i+1))
-        print(e)
         aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
+        raise MemoryError(e)
     except Exception as e:
         print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
         print('ERROR encountered in job {}. Continuing...'.format(i+1))
