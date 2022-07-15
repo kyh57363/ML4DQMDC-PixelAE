@@ -932,7 +932,7 @@ def display_top(snapshot, key_type='lineno', limit=3):
 
 
 ### Loop it Fxn
-def masterLoop(aeStats, numModels, histnames, histstruct):
+def masterLoop(aeStats, numModels, histnames, histstruct, debug):
     try:
         percComp = (numModels/conmodelcount)*100
         print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
@@ -976,7 +976,6 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
         del(autoencoders)
         
         # Creating a debug file for assessing autoencoder postprocessing
-        debug = []
         debug.append([mse_train, mse_good_eval, mse_bad_eval, wpData])
         df = pd.DataFrame(debug)
         csvu.write_csv(df, 'Debug.csv')
@@ -1027,7 +1026,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
         print('ERROR encountered in job {}. Continuing...'.format(i+1))
         print(e)
         aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
-    return aeStats, numModels
+    return aeStats, numModels, debug
 
 
 # In[ ]:
@@ -1047,11 +1046,12 @@ def gpu_check():
 ### Main loop to iterate through possible histlists
 userfriendly = True
 aeStats = []
+debug = []
 numModels = 0
 sys.stdout = open('HistPerm.log' , 'w')
 for i,histnames in enumerate(histlists):
     #tracemalloc.start()
-    (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct)
+    (aeStats, numModels, debug) = masterLoop(aeStats, numModels, histnames, histstruct, debug)
     #snapshot = tracemalloc.take_snapshot()
     #display_top(snapshot)
     df = pd.DataFrame(aeStats, columns=['Histnames', 'Job', 'Train Time', 'Average Separation', 'F_Measure'])
