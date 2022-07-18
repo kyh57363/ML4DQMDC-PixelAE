@@ -983,7 +983,6 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug):
         debug.append([mse_train, mse_good_eval, mse_bad_eval, wpData])
         np.array(debug)
         np.save('Debug', debug)
-        csvu.write_csv(df, 'Debug.csv')
 
         # Empty list
         dataPackage = [histnames, i + 1, trainTime, sep, f_measure, accuracy, precision, recall]
