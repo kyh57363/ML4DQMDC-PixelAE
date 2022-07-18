@@ -513,7 +513,7 @@ failedruns = {}
 failedls ={}
 # Unpack histnames and add every histogram individually
 consistent = True
-sys.stdout = open('HistPerm.log' , 'w')
+#sys.sdout = open('HistPerm.log' , 'w')
 for era in eras:
     for histnamegroup in histnames:
         for histname in histnamegroup:
@@ -546,7 +546,7 @@ for era in eras:
             
 sys.stdout.write('\rData import complete.')
 sys.stdout.flush()
-sys.stdout.close()
+#sys.sdout.close()
 
 # In[86]:
 
@@ -1048,7 +1048,7 @@ userfriendly = True
 aeStats = []
 debug = []
 numModels = 0
-sys.stdout = open('HistPerm.log' , 'w')
+#sys.sdout = open('HistPerm.log' , 'w')
 for i,histnames in enumerate(histlists):
     #tracemalloc.start()
     (aeStats, numModels, debug) = masterLoop(aeStats, numModels, histnames, histstruct, debug)
@@ -1059,4 +1059,4 @@ for i,histnames in enumerate(histlists):
     gc.collect()
     K.clear_session()
 
-sys.stdout.close()
+#sys.sdout.close()
