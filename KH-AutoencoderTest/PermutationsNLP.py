@@ -842,12 +842,6 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
     
     (tp, fp, tn, fn) = get_confusion_matrix(scores,labels)
 
-    pu.plot_score_dist(scores, labels, siglabel='anomalous', sigcolor='r', 
-                       bcklabel='good', bckcolor='g', 
-                       nbins=200, normalize=True,
-                       xaxtitle='negative logarithmic probability',
-                       yaxtitle='number of lumisections (normalized)')
-    
     # Get metrics for analysis
     accuracy = (tp + tn) / (tp + fp + tn + fn)
     precision = tp / (tp + fp)
@@ -984,10 +978,10 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug):
         for j, autoencoder in enumerate(autoencoders):
             autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
         del(autoencoders)
-        
         # Creating a debug file for assessing autoencoder postprocessing
         debug.append([mse_train, mse_good_eval, mse_bad_eval, wpData])
-        df = pd.DataFrame(debug)
+        np.array(debug)
+        np.save()
         csvu.write_csv(df, 'Debug.csv')
 
         # Empty list

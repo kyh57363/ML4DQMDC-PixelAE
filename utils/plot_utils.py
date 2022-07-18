@@ -585,6 +585,7 @@ def plot_score_dist( scores, labels, fig=None, ax=None,
     if xaxtitle is not None: ax.set_xlabel(xaxtitle, fontsize=xaxtitlesize)
     if yaxtitle is not None: ax.set_ylabel(yaxtitle, fontsize=yaxtitlesize)
     ax.legend( loc=legendloc, fontsize=legendsize )
+    ax.autoscale()
     if doshow: plt.show(block=False)
     return (fig,ax)
 
