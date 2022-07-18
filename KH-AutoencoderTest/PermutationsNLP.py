@@ -29,6 +29,7 @@ from tensorflow.keras.layers import Input, Dense, Concatenate
 from tensorflow.keras.models import Model
 import importlib
 import psutil
+import warnings
 
 # Necessary to keep GPU usage to a minimum
 from tensorflow.compat.v1 import ConfigProto
@@ -853,7 +854,10 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
     recall = tp / (tp + fn)
     if np.isnan(precision): precision = 0
     if np.isnan(recall): recall = 0
-    f_measure = (1 + fmBiasFactor * fmBiasFactor) * ((precision * recall) / ((fmBiasFactor * fmBiasFactor * precision) + recall)) 
+    try:
+        f_measure = (1 + fmBiasFactor * fmBiasFactor) * ((precision * recall) / ((fmBiasFactor * fmBiasFactor * precision) + recall)) 
+    except RuntimeWarning:
+        f_measure = 0
     if np.isnan(f_measure): f_measure = 0
 
     return (f_measure, accuracy, precision, recall)
