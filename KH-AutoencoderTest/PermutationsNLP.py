@@ -982,7 +982,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug):
         # Creating a debug file for assessing autoencoder postprocessing
         debug.append([mse_train, mse_good_eval, mse_bad_eval, wpData])
         np.array(debug)
-        np.save()
+        np.save('Debug', debug)
         csvu.write_csv(df, 'Debug.csv')
 
         # Empty list
