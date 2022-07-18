@@ -840,6 +840,12 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
     scores = np.concatenate(tuple([preds_good, preds_bad]))
     
     (tp, fp, tn, fn) = get_confusion_matrix(scores,labels)
+
+    pu.plot_score_dist(scores, labels, siglabel='anomalous', sigcolor='r', 
+                       bcklabel='good', bckcolor='g', 
+                       nbins=200, normalize=True,
+                       xaxtitle='negative logarithmic probability',
+                       yaxtitle='number of lumisections (normalized)')
     
     # Get metrics for analysis
     accuracy = (tp + tn) / (tp + fp + tn + fn)
@@ -850,7 +856,7 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
     f_measure = (1 + fmBiasFactor * fmBiasFactor) * ((precision * recall) / ((fmBiasFactor * fmBiasFactor * precision) + recall)) 
     if np.isnan(f_measure): f_measure = 0
 
-    return f_measure
+    return (f_measure, accuracy, precision, recall)
 
 # In[94]:
 
@@ -967,7 +973,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug):
         # Fraction of MSEs to use in WP definition vs testing
         wp_test_split = 0.6
         (wpData, sep) = fit_mse_distribution(mse_good_eval[:int(wp_test_split * len(mse_good_eval))], mse_bad_eval[:int(wp_test_split * len(mse_bad_eval))], wpBiasFactor)
-        (f_measure) = evaluate_autoencoders_combined(mse_good_eval, mse_bad_eval, wpData, wp_test_split)
+        (f_measure, accuracy, precision, recall) = evaluate_autoencoders_combined(mse_good_eval, mse_bad_eval, wpData, wp_test_split)
 
         gpu_check()    
 
@@ -981,13 +987,10 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug):
         csvu.write_csv(df, 'Debug.csv')
 
         # Empty list
-        dataPackage = [histnames, i + 1, trainTime, sep, f_measure]
+        dataPackage = [histnames, i + 1, trainTime, sep, f_measure, accuracy, precision, recall]
         if len(aeStats) < 1:
             aeStats.append(dataPackage)
             print('New Best Model:')
-            print(' - Train Time: ' + str(trainTime))
-            print(' - Separability: ' + str(sep))
-            print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
             
         # Non-empty List
         else:
@@ -995,25 +998,20 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug):
                 if f_measure < aeStats[j][4]:
                     aeStats.insert(j+1, dataPackage)
                     print('Model Position: ' + str(j + 1))
-                    print(' - Train Time: ' + str(trainTime))
-                    print(' - Separability: ' + str(sep))
-                    print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
                     break
                 elif f_measure == aeStats[j][4]:
-                    if sep < aeStats[j][3]:
+                    if accuracy < aeStats[j][5]:
                         aeStats.insert(j+1, dataPackage)
                         print('Model Position: ' + str(j + 1))
-                        print(' - Train Time: ' + str(trainTime))
-                        print(' - Separability: ' + str(sep))
-                        print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
                         break
                 # Reached end of list
                 if j == 0:
                     aeStats.insert(j, dataPackage)
                     print('New Best Model:')
-                    print(' - Train Time: ' + str(trainTime))
-                    print(' - Separability: ' + str(sep))
-                    print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
+        print(' - Train Time: ' + str(trainTime))
+        print(' - Separability: ' + str(sep))
+        print(' - Accuracy: ' + str(accuracy))
+        print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
                 
         print()
     except MemoryError as e:
@@ -1054,7 +1052,7 @@ for i,histnames in enumerate(histlists):
     (aeStats, numModels, debug) = masterLoop(aeStats, numModels, histnames, histstruct, debug)
     #snapshot = tracemalloc.take_snapshot()
     #display_top(snapshot)
-    df = pd.DataFrame(aeStats, columns=['Histnames', 'Job', 'Train Time', 'Average Separation', 'F_Measure'])
+    df = pd.DataFrame(aeStats, columns=['Histnames', 'Job', 'Train Time', 'Average Separation', 'F_Measure', 'Accuracy', 'Precision', 'Recall'])
     csvu.write_csv(df, 'Top50.csv')
     gc.collect()
     K.clear_session()
