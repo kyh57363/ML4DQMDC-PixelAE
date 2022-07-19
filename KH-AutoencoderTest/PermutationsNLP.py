@@ -833,7 +833,7 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
     # Same, but with known bad data
     preds_bad = np.zeros(len(mse_bad_test))
     for i, lumi in enumerate(mse_bad_test):
-        values = np.ones(len(lumi[lumi > workingPoints]))
+        values = np.ones(len(lumi[lumi < workingPoints]))
         anomalousList.append(np.where(lumi > workingPoints, True, False))
         if np.sum(values) > (testWeight/100) * len(lumi):
             preds_bad[i] = 1
