@@ -31,6 +31,7 @@ from tensorflow.keras.models import Model
 import importlib
 import psutil
 import warnings
+import nvidia_smi
 
 # Necessary to keep GPU usage to a minimum
 from tensorflow.compat.v1 import ConfigProto
@@ -1039,7 +1040,26 @@ def gpu_check():
     if usage['peak'] > 7000000000.0:
         raise MemoryError('Excessive GPU Memory Usage!')
 
+
+def memlocker():
+    nvidia_smi.nvmlInit()
+    handle = nvidia_smi.nvmlDeviceGetHandleByIndex(0)
+    info = nvidia_smi.nvmlDeviceGetMemoryInfo(handle)
+    return (info.free < 3000000000), info.free
+    
 ### Main loop to iterate through possible histlists
+memlock = True
+while(memlock):
+    gpuData = memlocker()
+    if(gpuData[0]):
+        memlock = False
+        break
+    else:
+        sys.stdout.write(str(gpuData/1000000000) + ' GB Available - Waiting for sufficient memory...')
+        sys.stdout.flush()
+        time.sleep(2)
+
+
 userfriendly = True
 aeStats = []
 debug = []
