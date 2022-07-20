@@ -821,7 +821,7 @@ def loopable(histstruct, histnames, numModels, aeStats, debug, i):
 aeStats = []
 debug = []
 numModels = 0
-for i in range(histlists):
+for i in range(len(histlists)):
     # Execute the main loop ops in a function to prevent memory leaks
     (numModels, aeStats, debug, i) = loopable(histstruct, histlists[i], numModels, aeStats, debug, i)
     
