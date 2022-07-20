@@ -891,10 +891,10 @@ def get_confusion_matrix(scores, labels, wp):
     nback = np.sum(1-labels)
 
     # get confusion matrix entries
-    tp = np.sum(np.where((labels==1) & (scores>wp),1,0))/nsig
-    fp = np.sum(np.where((labels==0) & (scores>wp),1,0))/nback
-    tn = 1-fp
-    fn = 1-tp
+    tp = np.sum(np.where((labels==1) & (scores==1),1,0))/nsig
+    fp = np.sum(np.where((labels==0) & (scores==1),1,0))/nback
+    tn = np.sum(np.where((labels==0) & (scores==0),1,0))/nback
+    fn = np.sum(np.where((labels==1) & (scores==0),1,0))/nsig
 
     
     # old plotting method with seaborn
