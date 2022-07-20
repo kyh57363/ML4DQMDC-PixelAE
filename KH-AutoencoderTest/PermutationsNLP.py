@@ -730,7 +730,7 @@ def gpu_check():
     # Get peak memory usage of GPU
     usage = tf.config.experimental.get_memory_info('GPU:0')
     print('Using {} GB of GPU Memory'.format(usage['peak'] / 1000000000.0))
-    if usage['peak'] > 2000000000.0:
+    if usage['peak'] > 4000000000.0:
         raise MemoryError('Excessive GPU Memory Usage!')
 
 ### Function for main loop operations
