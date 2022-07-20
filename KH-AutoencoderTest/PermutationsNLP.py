@@ -519,40 +519,39 @@ def define_concatamash_autoencoder(histstruct):
     histslist = []
     vallist = []
     autoencoders = []
-    if trainnew:
-        for i,histnamegroup in enumerate(histnames):
-            
-            train_normhist = np.array([hu.normalize(histstruct.get_histograms(
-                histname = hname, masknames = ['dcson','highstat', 'training']), 
-                                                 norm="l1", axis=1) 
-                                       for hname in histnamegroup]).transpose((1,0,2))
-            X_train, X_val = train_test_split(train_normhist, test_size=0.4, random_state=42)
-            
-            # Half the total bin count
-            arch = 51 * len(histnamegroup)
-            
-            ## Model parameters
-            input_dim = X_train.shape[2] #num of predictor variables
-            Input_layers=[Input(shape=input_dim) for i in range((X_train.shape[1]))]
-            
-            # Defining layers
-            conc_layer = Concatenate()(Input_layers)
-            encoder = Dense(arch * 2, activation="tanh")(conc_layer)
-            encoder = Dense(arch/2, activation='relu')(encoder)
-            encoder = Dense(arch/8, activation='relu')(encoder)
-            encoder = Dense(arch/16, activation='relu')(encoder)
-            decoder = Dense(arch/8, activation="relu")(encoder)
-            decoder = Dense(arch/2, activation='relu')(encoder)
-            decoder = Dense(arch * 2, activation="tanh")(decoder)
-            
-            Output_layers=[Dense(input_dim, activation="tanh")(decoder) for i in range(X_train.shape[1])]
+    for i,histnamegroup in enumerate(histnames):
+        
+        train_normhist = np.array([hu.normalize(histstruct.get_histograms(
+            histname = hname, masknames = ['dcson','highstat', 'training']), 
+                                                norm="l1", axis=1) 
+                                    for hname in histnamegroup]).transpose((1,0,2))
+        X_train, X_val = train_test_split(train_normhist, test_size=0.4, random_state=42)
+        
+        # Half the total bin count
+        arch = 51 * len(histnamegroup)
+        
+        ## Model parameters
+        input_dim = X_train.shape[2] #num of predictor variables
+        Input_layers=[Input(shape=input_dim) for i in range((X_train.shape[1]))]
+        
+        # Defining layers
+        conc_layer = Concatenate()(Input_layers)
+        encoder = Dense(arch * 2, activation="tanh")(conc_layer)
+        encoder = Dense(arch/2, activation='relu')(encoder)
+        encoder = Dense(arch/8, activation='relu')(encoder)
+        encoder = Dense(arch/16, activation='relu')(encoder)
+        decoder = Dense(arch/8, activation="relu")(encoder)
+        decoder = Dense(arch/2, activation='relu')(encoder)
+        decoder = Dense(arch * 2, activation="tanh")(decoder)
+        
+        Output_layers=[Dense(input_dim, activation="tanh")(decoder) for i in range(X_train.shape[1])]
 
-            autoencoder = Model(inputs=Input_layers, outputs=Output_layers)
-            autoencoders.append(autoencoder)
-            
-            histslist.append(X_train)
-            vallist.append(X_val)
-     
+        autoencoder = Model(inputs=Input_layers, outputs=Output_layers)
+        autoencoders.append(autoencoder)
+        
+        histslist.append(X_train)
+        vallist.append(X_val)
+    
     # Return the histograms stored 2-Dimensionally and the autoencoders corresponding
     return(histslist, vallist, autoencoders, train_normhist)
 
@@ -821,7 +820,7 @@ def loopable(histstruct, histnames, numModels, aeStats, debug, i):
 aeStats = []
 debug = []
 numModels = 0
-for i in range(histlists):
+for i in range(len(histlists)):
     # Execute the main loop ops in a function to prevent memory leaks
     (numModels, aeStats, debug, i) = loopable(histstruct, histlists[i], numModels, aeStats, debug, i)
     
