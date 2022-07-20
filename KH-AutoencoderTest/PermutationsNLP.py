@@ -508,8 +508,6 @@ def assignMasks(histstruct, runsls_training, runsls_good, runsls_bad):
         for i,badrun in enumerate(runsls_bad.keys()):
             histstruct.add_json_mask( 'bad{}'.format(i), {badrun:runsls_bad[badrun]} )
             
-    if save:
-        histstruct.save('test.pk1')
     return histstruct
 
 ### Defines the autoencoders for training
