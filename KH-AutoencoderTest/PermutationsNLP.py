@@ -470,7 +470,6 @@ for era in eras:
             
 sys.stdout.write('\rData import complete.')
 sys.stdout.flush()
-sys.stdout.close()
 
 # Give user information on failed imports
 runsls_total = {k: v for d in (runsls_training, runsls_good, runsls_bad) for k, v in d.items()}
@@ -833,3 +832,4 @@ for i in range(len(histlists)):
     gc.collect()
     K.clear_session()
 
+sys.stdout.close()
