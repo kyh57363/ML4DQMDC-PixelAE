@@ -1,4 +1,22 @@
-Permutations.py:805: RuntimeWarning: divide by zero encountered in log
-  logprob_good = np.log(fitfunc.pdf(mse_good_eval))
-Permutations.py:808: RuntimeWarning: divide by zero encountered in log
-  logprob_bad_parts = [np.log(fitfunc.pdf(mse_bad_eval[j])) for j in range(len(mse_bad_eval))]
+Traceback (most recent call last):
+  File "Permutations.py", line 1097, in <module>
+    (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct)
+  File "Permutations.py", line 975, in masterLoop
+    autoencoders = train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders)
+  File "Permutations.py", line 696, in train_concatamash_autoencoder
+    callbacks= [earlystop],    
+  File "/usr/local/lib/python3.6/dist-packages/keras/engine/training.py", line 1184, in fit
+    tmp_logs = self.train_function(iterator)
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/eager/def_function.py", line 885, in __call__
+    result = self._call(*args, **kwds)
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/eager/def_function.py", line 917, in _call
+    return self._stateless_fn(*args, **kwds)  # pylint: disable=not-callable
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/eager/function.py", line 3040, in __call__
+    filtered_flat_args, captured_inputs=graph_function.captured_inputs)  # pylint: disable=protected-access
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/eager/function.py", line 1964, in _call_flat
+    ctx, args, cancellation_manager=cancellation_manager))
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/eager/function.py", line 596, in call
+    ctx=ctx)
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/eager/execute.py", line 60, in quick_execute
+    inputs, attrs, num_outputs)
+KeyboardInterrupt

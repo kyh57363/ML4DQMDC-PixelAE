@@ -451,7 +451,7 @@ for era in eras:
             
             # In case of local training, we can remove most of the histograms
             if( runsls_training is not None and runsls_good is not None and runsls_bad is not None ):
-                runsls_total = {k: v for d in (runsls_training, runsls_good, runsls_mse, runsls_bad) for k, v in d.items()}
+                runsls_total = {k: v for d in (runsls_training, runsls_good, runsls_bad) for k, v in d.items()}
                 df = dfu.select_runsls( df, runsls_total )
             
             df = dfu.rm_duplicates(df)
