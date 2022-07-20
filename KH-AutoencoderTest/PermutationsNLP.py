@@ -828,9 +828,7 @@ for i in range(len(histlists)):
     (numModels, aeStats, debug, i) = loopable(histstruct, histlists[i], numModels, aeStats, debug, i)
     
     # Save data for later examination
-    df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time',
-                                   'Separable Percent Good', 'Worst Case Separation',
-                                   'F_measure', 'Working Point', 'Separability', 'Separable Percent Bad'])
+    df = pd.DataFrame(aeStats, columns=['Histnames', 'Job', 'Training Time', 'F_measure', 'Accuracy', 'Precision', 'Recall'])
     csvu.write_csv(df, 'Top50.csv')
     debugAr = np.array(debug)
     np.save('./DebugData/Debug', arr=debugAr, allow_pickle=True)
