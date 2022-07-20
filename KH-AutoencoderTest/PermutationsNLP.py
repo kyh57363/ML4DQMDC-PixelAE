@@ -836,15 +836,3 @@ for i in range(histnames):
     # Ensure memory is cleared
     gc.collect()
     K.clear_session()
-
-<<<<<<< HEAD
-sys.stdout.close()
-=======
-#sys.sdout.close()
-
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[97]:
-
->>>>>>> d8670f4e151ffe150c48fcf94a30786af6bb5b3a
