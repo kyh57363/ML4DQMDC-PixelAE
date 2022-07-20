@@ -821,9 +821,9 @@ def loopable(histstruct, histnames, numModels, aeStats, debug, i):
 aeStats = []
 debug = []
 numModels = 0
-for i in range(histnames):
+for i in range(histlists):
     # Execute the main loop ops in a function to prevent memory leaks
-    (numModels, aeStats, debug, i) = loopable(histstruct, histnames[i], numModels, aeStats, debug, i)
+    (numModels, aeStats, debug, i) = loopable(histstruct, histlists[i], numModels, aeStats, debug, i)
     
     # Save data for later examination
     df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time',
