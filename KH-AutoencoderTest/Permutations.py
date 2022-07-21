@@ -1063,7 +1063,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct, i):
                     print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
         print(' - Logprob Threshold: ' + str(logprob_threshold))     
         print()
-    except tf.python.framework.errors_impl.ResourceExhaustedError as e:
+    except tf.errors.ResourceExhaustedError as e:
         i -= 1
         print('Insufficient Resources! Waiting...')
         time.sleep(30)

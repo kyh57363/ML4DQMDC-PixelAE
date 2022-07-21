@@ -1,0 +1,22 @@
+Traceback (most recent call last):
+  File "Permutations.py", line 1097, in <module>
+    raise MemoryError('Excessive GPU Memory Usage!')
+  File "Permutations.py", line 975, in masterLoop
+    sys.stderr = open('trash', 'w')
+  File "Permutations.py", line 696, in train_concatamash_autoencoder
+    callbacks= [earlystop],    
+  File "/usr/local/lib/python3.6/dist-packages/keras/engine/training.py", line 1226, in fit
+    _use_cached_eval_dataset=True)
+  File "/usr/local/lib/python3.6/dist-packages/keras/engine/training.py", line 1495, in evaluate
+    for _, iterator in data_handler.enumerate_epochs():  # Single epoch.
+  File "/usr/local/lib/python3.6/dist-packages/keras/engine/data_adapter.py", line 1180, in enumerate_epochs
+    data_iterator = iter(self._dataset)
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/data/ops/dataset_ops.py", line 411, in __iter__
+    return iterator_ops.OwnedIterator(self)
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/data/ops/iterator_ops.py", line 696, in __init__
+    self._create_iterator(dataset)
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/data/ops/iterator_ops.py", line 719, in _create_iterator
+    gen_dataset_ops.make_iterator(ds_variant, self._iterator_resource)
+  File "/usr/local/lib/python3.6/dist-packages/tensorflow/python/ops/gen_dataset_ops.py", line 3121, in make_iterator
+    _ctx, "MakeIterator", name, dataset, iterator)
+KeyboardInterrupt
