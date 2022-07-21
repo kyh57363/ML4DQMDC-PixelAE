@@ -892,9 +892,9 @@ def get_confusion_matrix(scores, labels, wp):
 
     # get confusion matrix entries
     tp = np.sum(np.where((labels==1) & (scores==1),1,0))/nsig
-    fp = np.sum(np.where((labels==0) & (scores==1),1,0))/nback
     tn = np.sum(np.where((labels==0) & (scores==0),1,0))/nback
-    fn = np.sum(np.where((labels==1) & (scores==0),1,0))/nsig
+    fp = 1 - tn
+    fn = 1 - tp
 
     
     # old plotting method with seaborn
@@ -1063,7 +1063,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct, i):
                     print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
         print(' - Logprob Threshold: ' + str(logprob_threshold))     
         print()
-    except tf.errors.ResourceExhaustedError as e as e:
+    except tf.errors.ResourceExhaustedError as e:
         i -= 1
         print('Insufficient Resources! Waiting...')
         time.sleep(30)
