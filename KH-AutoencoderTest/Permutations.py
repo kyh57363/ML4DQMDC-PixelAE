@@ -1017,7 +1017,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct, i):
         debug = []
         debug.append([mse_train, mse_good_eval, mse_bad_eval, logprob_good, logprob_bad, logprob_threshold])
         debugAr = np.array(debug)
-        debug.save('./DebugData/Debug{}'.format(i+1), arr = debugAr)
+        np.save('./DebugData/Debug{}'.format(i+1), arr = debugAr)
 
         # Empty list
         dataPackage = [histnames, i + 1, trainTime, sepPercG, sep, f_measure, logprob_threshold, separability, sepPercB]
