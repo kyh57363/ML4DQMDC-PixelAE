@@ -444,7 +444,7 @@ failedruns = {}
 failedls ={}
 # Unpack histnames and add every histogram individually
 consistent = True
-sys.stdout = open('HistPerm.log' , 'w')
+#sys.stdout = open('HistPerm.log' , 'w')
 for era in eras:
     for histnamegroup in histnames:
         for histname in histnamegroup:
@@ -475,7 +475,7 @@ for era in eras:
                 failedls[histname] = dfu.get_ls(df)
                 consistent = False
             
-sys.stdout.write('\rData import complete.')
+sys.stdout.write('\rData import complete.\n')
 sys.stdout.flush()
 
 # Give user information on failed imports
@@ -517,12 +517,12 @@ def assignMasks(histstruct, runsls_training, runsls_good, runsls_bad):
     return histstruct
 
 ### Defines the autoencoders for training
-def define_concatamash_autoencoder(histstruct):
+def define_concatamash_autoencoder(histstruct, histnamelist):
     
     histslist = []
     vallist = []
     autoencoders = []
-    for i,histnamegroup in enumerate(histnames):
+    for i,histnamegroup in enumerate(histnamelist):
         
         train_normhist = np.array([hu.normalize(histstruct.get_histograms(
             histname = hname, masknames = ['dcson','highstat', 'training']), 
@@ -559,7 +559,7 @@ def define_concatamash_autoencoder(histstruct):
     return(histslist, vallist, autoencoders, train_normhist)
 
 ### Trains a given set of autoencoders
-def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
+def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders, histnamelist):
     
     # Iterate through the training data to train corresponding autoencoders
     autoencodersTrain = []
@@ -605,7 +605,7 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
         
         # Save classifier for evaluation
         classifier = AutoEncoder.AutoEncoder(model=autoencoder)
-        histstruct.add_classifier(histnames[i][0], classifier) 
+        histstruct.add_classifier(histnamelist[i][0], classifier) 
         autoencodersTrain.append(classifier)
         K.clear_session()
         del(autoencoder, classifier)
@@ -613,36 +613,14 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
 
 ### Gets MSE for a given group of histograms
 def getMSEs(histstruct, histgroup, masknames=None):
-    mse_normhist = np.array([hu.normalize(histstruct.get_histograms(
-                histname = hname, masknames = masknames), 
-                                                 norm="l1", axis=1) 
-                                       for hname in histnamegroup]).transpose((1,0,2))
-    
-    predictions = np.array(histstruct.classifiers[histgroup[0]].model.predict([mse_normhist[:,i] for i in range(mse_normhist.shape[1])]))
-    hists_eval = []
-    for i in range(len(histgroup)):
-        ls_eval = []
-        for ls in mse_normhist:
-            ls_eval.append(ls[i])
-        hists_eval.append(ls_eval)
+    mselist = []
+    for histname in histgroup:
+        mselist.append(histstruct.get_scores(histname = histname, masknames=masknames))
 
-    # Outputs scores by histogram by lumisection
-    scoreslist = []
-    for i in range(len(histgroup)):
-        data = np.array(hists_eval[i])
-        preds = predictions[i]
-        sqdiff = np.power(data-preds,2)
-        sqdiff[:,::-1].sort()
-        sqdiff = sqdiff[:,:10]
-        mean = np.mean(sqdiff,axis=-1)
-        scoreslist.append(mean)
-    
-        histstruct.scores[histgroup[i]] = mean
-
-    return scoreslist
+    return mselist
 
 ### Get Predictions from the Models for WP definition
-def predict_models_train(histstruct, histnames):
+def predict_models_train(histstruct, histnamelist):
 
     # Iterates through every histogram and finds mses for the subsets
     wps = {}
@@ -651,18 +629,20 @@ def predict_models_train(histstruct, histnames):
     mse_trains = []
     mse_goods = []
     mse_bads = []
-    for histgroup in histnames:
-        mse_train = getMSEs(histstruct, histgroup, masknames=['dcson','highstat', 'training'])
-        mse_good = getMSEs(histstruct, histgroup, masknames=['dcson','highstat', 'good'])
-        mse_bad = getMSEs(histstruct, histgroup, masknames=['dcson','highstat', 'bad'])
+    for histgroup in histnamelist:
+        histstruct.evaluate_classifier(histgroup)
+        for histname in histgroup:
+            mse_train = getMSEs(histstruct, histgroup, masknames=['dcson','highstat', 'training'])
+            mse_good = getMSEs(histstruct, histgroup, masknames=['dcson','highstat', 'good'])
+            mse_bad = getMSEs(histstruct, histgroup, masknames=['dcson','highstat', 'bad'])
         
-        # Save for debugging
-        mse_trains.append(mse_train)
-        mse_goods.append(mse_good)
-        mse_bads.append(mse_bad)
+            # Save for debugging
+            mse_trains.append(mse_train)
+            mse_goods.append(mse_good)
+            mse_bads.append(mse_bad)
 
         # Determine whether the model predicts each lumisection good or bad
-        for i, histname in histnamegroup:
+        for i, histname in enumerate(histnamegroup):
             wp = np.mean(mse_train[i]) + wpBiasFactor*np.std(mse_train[i])
             wps[histname] = (wp)
 
@@ -672,14 +652,14 @@ def predict_models_train(histstruct, histnames):
     return (wps, goodPreds, badPreds, mse_trains, mse_goods, mse_bads)
 
 ### Determine how well the model distinguished good/bad data
-def evaluate_models(histnames, goodPreds, badPreds):
+def evaluate_models(histnamelist, goodPreds, badPreds):
 
     # Getting data into format in which histograms can easily vote
-    histname = histnames[0][0]
+    histname = histnamelist[0][0]
     goodlumiperhist = np.zeros(len(goodPreds[histname]), (len(goodPreds.keys())))
     badlumiperhist = np.zeros(len(badPreds[histname]), (len(badPreds.keys())))
     histcount = 0
-    for histgroup in histnames:
+    for histgroup in histnamelist:
         for histname in histgroup:
             for i in range(len(goodPreds[histname])):
                 goodlumiperhist[i][histcount] = goodPreds[histname][i]
@@ -736,16 +716,16 @@ def gpu_check():
         raise MemoryError('Excessive GPU Memory Usage!')
 
 ### Function for main loop operations
-def loopable(histstruct, histnames, numModels, aeStats, debug, i):
-    try:
+def loopable(histstruct, histnamelist, numModels, aeStats, debug, i):
+    # try:
         percComp = (numModels/conmodelcount)*100
         print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
 
         # Update histlist to reflect new data
-        histstruct.reset_histlist(histnames, suppress=True)
+        histstruct.reset_histlist(histnamelist, suppress=True)
         assignMasks(histstruct, runsls_training, runsls_good, runsls_bad)
 
-        (histslist, vallist, autoencoders, _) = define_concatamash_autoencoder(histstruct)
+        (histslist, vallist, autoencoders, _) = define_concatamash_autoencoder(histstruct, histnamelist)
 
         # Train autoencoders based on current histlist and record speed
         start = time.perf_counter()
@@ -753,7 +733,8 @@ def loopable(histstruct, histnames, numModels, aeStats, debug, i):
         # Suppress Unhelpful Error Messages
         orig_out = sys.stderr
         sys.stderr = open('trash', 'w')
-        autoencoders = train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders)
+        autoencoders = train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders, histnamelist)
+        print()
         gpu_check()
         sys.stderr = orig_out
         
@@ -764,12 +745,12 @@ def loopable(histstruct, histnames, numModels, aeStats, debug, i):
         trainTime = stop - start
 
         # Run model prediction
-        (wps, goodPreds, badPreds, mse_trains, mse_goods, mse_bads) = predict_models_train(histstruct, histnames)
+        (wps, goodPreds, badPreds, mse_trains, mse_goods, mse_bads) = predict_models_train(histstruct, histnamelist)
 
-        (accuracy, precision, recall, f_measure) = evaluate_models(histnames, goodPreds, badPreds)
+        (accuracy, precision, recall, f_measure) = evaluate_models(histnamelist, goodPreds, badPreds)
 
         debug.append([wps, mse_trains, mse_goods, mse_bads])
-        dataPackage = [histnames, i + 1, trainTime, f_measure, accuracy, precision, recall]
+        dataPackage = [histnamelist, i + 1, trainTime, f_measure, accuracy, precision, recall]
         if len(aeStats) < 1:
             aeStats.append(dataPackage)
             print('New Best Model:')
@@ -800,24 +781,24 @@ def loopable(histstruct, histnames, numModels, aeStats, debug, i):
         return(numModels, aeStats, debug, i)
 
     # In case someone else is using all the resources, wait and try again
-    except tf.errors.ResourceExhaustedError as e:
-        i -= 1
-        print('Insufficient Resources! Waiting...')
-        time.sleep(30)
-        return(numModels, aeStats, debug, i)
+    # except tf.errors.ResourceExhaustedError as e:
+    #     i -= 1
+    #     print('Insufficient Resources! Waiting...')
+    #     time.sleep(30)
+    #     return(numModels, aeStats, debug, i)
     
-    # If this program is overutilizing memory, kill the process
-    except MemoryError as e:
-        print('Overutilization detected! Exiting...')
-        raise Exception('Excessive Memory Usage!')
+    # # If this program is overutilizing memory, kill the process
+    # except MemoryError as e:
+    #     print('Overutilization detected! Exiting...')
+    #     raise Exception('Excessive Memory Usage!')
     
-    # Other random exceptions are inconsequential and can be passed over
-    except Exception as e:
-        print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
-        print('ERROR encountered in job {}. Continuing...'.format(i+1))
-        print(e)
-        aeStats.append(['ERROR', i + 1, 0, 0, 0, 0, 0])
-        return(numModels, aeStats, debug, i)
+    # # Other random exceptions are inconsequential and can be passed over
+    # except Exception as e:
+    #     print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
+    #     print('ERROR encountered in job {}. Continuing...'.format(i+1))
+    #     print(e)
+    #     aeStats.append(['ERROR', i + 1, 0, 0, 0, 0, 0])
+    #     return(numModels, aeStats, debug, i)
         
 ### Master Loop
 aeStats = []
@@ -828,10 +809,12 @@ for i in range(len(histlists)):
     (numModels, aeStats, debug, i) = loopable(histstruct, histlists[i], numModels, aeStats, debug, i)
     
     # Save data for later examination
-    df = pd.DataFrame(aeStats, columns=['Histnames', 'Job', 'Training Time', 'F_measure', 'Accuracy', 'Precision', 'Recall'])
-    csvu.write_csv(df, 'Top50.csv')
-    debugAr = np.array(debug)
-    np.save('./DebugData/Debug', arr=debugAr, allow_pickle=True)
+    if len(aeStats) > 1:
+        df = pd.DataFrame(aeStats, columns=['Histnames', 'Job', 'Training Time', 'F_measure', 'Accuracy', 'Precision', 'Recall'])
+        csvu.write_csv(df, 'Top50.csv')
+    if len(debug) > 1:
+        debugAr = np.array(debug)
+        np.save('./DebugData/Debug', arr=debugAr, allow_pickle=True)
 
     # Ensure memory is cleared
     gc.collect()
