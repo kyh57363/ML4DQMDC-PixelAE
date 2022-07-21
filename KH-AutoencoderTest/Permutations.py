@@ -1013,8 +1013,8 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
         # Creating a debug file for assessing autoencoder postprocessing
         debug = []
         debug.append([mse_train, mse_good_eval, mse_bad_eval, logprob_good, logprob_bad, logprob_threshold])
-        df = pd.DataFrame(debug, columns=['TrainMSE', 'GoodMSE', 'BadMSE', 'LPGood', 'LPBad', 'LPThreshold'])
-        csvu.write_csv(df, 'Debug.csv')
+        debugAr = np.array(debug)
+        debug.save('./DebugData/Debug{}'.format(i+1), arr = debugAr)
 
         # Empty list
         dataPackage = [histnames, i + 1, trainTime, sepPercG, sep, f_measure, logprob_threshold, separability, sepPercB]
