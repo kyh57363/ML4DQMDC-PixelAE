@@ -954,8 +954,9 @@ def display_top(snapshot, key_type='lineno', limit=3):
 
 
 ### Loop it Fxn
-def masterLoop(aeStats, numModels, histnames, histstruct):
+def masterLoop(aeStats, numModels, histnames, histstruct, i):
     try:
+        updateCheck = False
         percComp = (numModels/conmodelcount)*100
         print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
         
@@ -975,7 +976,9 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
         autoencoders = train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders)
         sys.stderr = orig_out
         
+        localmodelcount = len(autoencoder)
         numModels += len(autoencoders)
+        updateCheck = True
         
         stop = time.perf_counter()
         trainTime = stop - start
@@ -1058,8 +1061,14 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
                     print(' - Separable Percent Good: ' + str(sepPercG))
                     print(' - Separability: ' + str(separability))
                     print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
-                
+        print(' - Logprob Threshold: ' + str(logprob_threshold))     
         print()
+    except tf.errors.ResourceExhaustedError as e:
+        i -= 1
+        print('Insufficient Resources! Waiting...')
+        time.sleep(30)
+        if updateCheck: numModels -= localmodelcount 
+        return(aeStats, numModels, i)
     except MemoryError as e:
         print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
         print('ERROR encountered in job {}. Exiting...'.format(i+1))
@@ -1070,7 +1079,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
         print('ERROR encountered in job {}. Continuing...'.format(i+1))
         print(e)
         aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
-    return aeStats, numModels
+    return aeStats, numModels, i
 
 
 # In[ ]:
@@ -1092,15 +1101,16 @@ userfriendly = True
 aeStats = []
 numModels = 0
 sys.stdout = open('HistPerm.log' , 'w')
-for i,histnames in enumerate(histlists):
+for i in range(len(histlists)):
     #tracemalloc.start()
-    (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct)
+    (aeStats, numModels, i) = masterLoop(aeStats, numModels, histlists[i], histstruct, i)
     #snapshot = tracemalloc.take_snapshot()
     #display_top(snapshot)
-    df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time',
+    if len(aeStats) > 0:
+        df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time',
                                    'Separable Percent Good', 'Worst Case Separation',
                                    'F_measure', 'Working Point', 'Separability', 'Separable Percent Bad'])
-    csvu.write_csv(df, 'Top50.csv')
+        csvu.write_csv(df, 'Top50.csv')
     gc.collect()
     K.clear_session()
 
