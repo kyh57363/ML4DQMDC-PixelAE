@@ -545,7 +545,7 @@ for era in eras:
                 failedls[histname] = dfu.get_ls(df)
                 consistent = False
             
-sys.stdout.write('\rData import complete.')
+sys.stdout.write('\rData import complete.\n')
 sys.stdout.flush()
 #sys.sdout.close()
 
@@ -597,7 +597,6 @@ def assignMasks(histstruct, runsls_training, runsls_good, runsls_bad):
 
 
 def define_concatamash_autoencoder(histstruct):
-    
     histslist = []
     vallist = []
     autoencoders = []
@@ -699,12 +698,11 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
         
         # Save classifier for evaluation
         classifier = AutoEncoder.AutoEncoder(model=autoencoder)
-        histstruct.add_classifier(histnames[i][0], classifier) 
+        histstruct.add_classifier(histnamelist[i][0], classifier) 
         autoencodersTrain.append(classifier)
         K.clear_session()
         del(autoencoder, classifier)
     return autoencodersTrain
-
 
 # In[90]:
 
@@ -943,7 +941,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug, i):
         print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
         
         # Update histlist to reflect new data
-        histstruct.reset_histlist(histnames, suppress=True)
+        histstruct.reset_histlist(histnamelist, suppress=True)
         assignMasks(histstruct, runsls_training, runsls_good, runsls_bad)
         
         # Build autoencoders based on new data

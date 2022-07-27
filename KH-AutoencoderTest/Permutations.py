@@ -1117,6 +1117,3 @@ while i < len(histlists):
     i += 1
 
 sys.stdout.close()
-
-# %%
-
