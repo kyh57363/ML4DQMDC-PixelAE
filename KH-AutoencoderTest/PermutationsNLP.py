@@ -515,7 +515,7 @@ failedruns = {}
 failedls ={}
 # Unpack histnames and add every histogram individually
 consistent = True
-#sys.sdout = open('HistPerm.log' , 'w')
+sys.sdout = open('HistPerm.log' , 'w')
 for era in eras:
     for histnamegroup in histnames:
         for histname in histnamegroup:
@@ -546,7 +546,11 @@ for era in eras:
                 failedls[histname] = dfu.get_ls(df)
                 consistent = False
             
+<<<<<<< HEAD
 sys.stdout.write('\rData import complete.\n\n')
+=======
+sys.stdout.write('\rData import complete.\n')
+>>>>>>> 635abd6fce031baaff8f23309869189a65a39628
 sys.stdout.flush()
 #sys.sdout.close()
 
@@ -598,7 +602,6 @@ def assignMasks(histstruct, runsls_training, runsls_good, runsls_bad):
 
 
 def define_concatamash_autoencoder(histstruct):
-    
     histslist = []
     vallist = []
     autoencoders = []
@@ -700,12 +703,11 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
         
         # Save classifier for evaluation
         classifier = AutoEncoder.AutoEncoder(model=autoencoder)
-        histstruct.add_classifier(histnames[i][0], classifier) 
+        histstruct.add_classifier(histnamelist[i][0], classifier) 
         autoencodersTrain.append(classifier)
         K.clear_session()
         del(autoencoder, classifier)
     return autoencodersTrain
-
 
 # In[90]:
 
@@ -821,13 +823,17 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
     labels_bad = np.ones(len(mse_bad_test))
     
     # Percentage of histograms with issues to flag an anomaly
+<<<<<<< HEAD
     testWeight = 2
+=======
+    testWeight = 3
+>>>>>>> 635abd6fce031baaff8f23309869189a65a39628
     # Check each histogram and if a sufficient number are anomalous, flag the lumisection
     anomalousList = []
     preds_good = np.zeros(len(mse_good_test))
     for i,lumi in enumerate(mse_good_test):
         values = np.ones(len(lumi[lumi > workingPoints]))
-        if np.sum(values) > (testWeight/100) * len(lumi):
+        if np.sum(values) > testWeight:
             preds_good[i] = 1
     
     # Same, but with known bad data
@@ -835,7 +841,7 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
     for i, lumi in enumerate(mse_bad_test):
         values = np.ones(len(lumi[lumi > workingPoints]))
         anomalousList.append(np.where(lumi > workingPoints, True, False))
-        if np.sum(values) > (testWeight/100) * len(lumi):
+        if np.sum(values) > (testWeight):
             preds_bad[i] = 1
             
     labels = np.concatenate(tuple([labels_good, labels_bad]))
@@ -944,7 +950,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug, i):
         print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
         
         # Update histlist to reflect new data
-        histstruct.reset_histlist(histnames, suppress=True)
+        histstruct.reset_histlist(histnamelist, suppress=True)
         assignMasks(histstruct, runsls_training, runsls_good, runsls_bad)
         
         # Build autoencoders based on new data
@@ -985,7 +991,11 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug, i):
         # Creating a debug file for assessing autoencoder postprocessing
         debug.append([mse_train, mse_good_eval, mse_bad_eval, wpData])
         debugAr = np.array(debug)
+<<<<<<< HEAD
         np.save('./DebugData', arr = debugAr)
+=======
+        np.save('./DebugData/Debug', arr = debugAr)
+>>>>>>> 635abd6fce031baaff8f23309869189a65a39628
 
         # Empty list
         dataPackage = [histnames, i + 1, trainTime, sep, f_measure, accuracy, precision, recall]
@@ -1012,8 +1022,10 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug, i):
         print(' - Train Time: ' + str(trainTime))
         print(' - Separability: ' + str(sep))
         print(' - Accuracy: ' + str(accuracy))
+        print(' - Precision: ' + str(precision))
+        print(' - Recall: ' + str(recall))
         print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
-                
+        print(' - WP Sample: ' + str(wpData[0][0]))        
         print()
     except tf.errors.ResourceExhaustedError as e:
          i -= 1
@@ -1068,4 +1080,8 @@ while i < (len(histlists)):
     K.clear_session()
     i += 1
 
+<<<<<<< HEAD
 #sys.sdout.close()
+=======
+sys.sdout.close()
+>>>>>>> 635abd6fce031baaff8f23309869189a65a39628

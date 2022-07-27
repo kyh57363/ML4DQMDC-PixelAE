@@ -164,7 +164,6 @@ class FlexiStruct( HistStruct.HistStruct ):
         
         # Case of not using extra histograms beyond the traditional dataset
         if extname is None:
-            histograms = []
             for histname in histgroup:
                 
                 # Kind of redundant in most cases, but makes sure all histograms exist
@@ -212,7 +211,6 @@ class FlexiStruct( HistStruct.HistStruct ):
         # - this method takes the scores from the HistStruct.scores attribute;
         #   make sure to have evaluated the classifiers before calling this method,
         #   else an exception will be thrown."""
-        histnames = self.histnames[:]
         if histname is not None:
             # check if histname is valid
             if histname not in self.histnames:
@@ -221,16 +219,16 @@ class FlexiStruct( HistStruct.HistStruct ):
             if histname not in self.scores.keys():
                 raise Exception('ERROR in HistStruct.get_scores: requested histogram name {}'.format(histname)
                                +' but the scores for this histogram type were not yet initialized.')
-            histnames = [histname]
         mask = np.ones(len(self.lsnbs)).astype(bool)
         if masknames is not None:
             mask = self.get_combined_mask(masknames)
         res = {}
-        for histgroup in self.histlist:
-            for hname in histgroup:
-                res[hname] = self.scores[hname][mask]
-        if histname is None: return res
-        return res[histname]
+        if histname is None:
+            for histgroup in self.histlist:
+                for hname in histgroup:
+                    res[hname] = self.scores[hname][mask]
+                    return res 
+        return self.scores[histname][mask]
         
     def get_scores_array( self, masknames=None ):
         """### similar to get_scores, but with different return type:
