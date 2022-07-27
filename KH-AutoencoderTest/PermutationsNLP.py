@@ -1,4 +1,11 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[97]:
+
+
 ### imports
+
 # external modules
 import os
 import gc
@@ -22,6 +29,7 @@ from tensorflow.keras.layers import Input, Dense, Concatenate
 from tensorflow.keras.models import Model
 import importlib
 import psutil
+import warnings
 
 # Necessary to keep GPU usage to a minimum
 from tensorflow.compat.v1 import ConfigProto
@@ -70,20 +78,19 @@ importlib.reload(SeminormalFitter)
 importlib.reload(GaussianKdeFitter)
 importlib.reload(HyperRectangleFitter)
 
-# Select data to be used in training
+
+# In[74]:
+
+# Data selection
 year = '2017'
 eras = ['E', 'F']
 
-### Controls
-# Bias Factors
-fmBiasFactor = 2
-wpBiasFactor = 3
-badThreshold = 3
-
-# Set up data directory location
 datadir = {}
 for era in eras:
-    datadir[year+era]  = '../data/' + year + era + '/'
+    datadir[year + era] = '../data/' + year + era + '/'
+
+
+# In[75]:
 
 # Histogram type selection
 blk1Vars = ['chargeInner', 'chargeOuter', 'adc', 'size']
@@ -102,6 +109,10 @@ miscVars = [
     'num_clusters_ontrack_PXForward', 
     #'NumberOfClustersInStrip'
 ]
+
+
+# In[76]:
+
 
 ### Get the different permutations for block 1
 combosBlk1 = []
@@ -143,6 +154,10 @@ for size in range(1, len(blk1Vars) + 1):
         subList.append(subListDSN)
         
         combosBlk1.append(subList)
+
+
+# In[77]:
+
 
 ### Permutations for block 2
 combosBlk2 = []
@@ -203,7 +218,11 @@ for size in range(1, len(blk2Vars) + 1):
         if len(subTECP) > 0:
             subList.append(subTECP)
         subList.append(subTECN)
-        combosBlk2.append(subList) 
+        combosBlk2.append(subList)
+
+
+# In[78]:
+
 
 ### Permutations for block 3
 combosBlk3 = []
@@ -225,6 +244,10 @@ for size in range(1, len(blk3Vars) + 1):
         
         combosBlk3.append([subList])
 
+
+# In[79]:
+
+
 ### Permutations for block 4
 combosBlk4 = []
 
@@ -242,7 +265,11 @@ for size in range(0, len(miscVars) + 1):
         subList.append(subSubList)
         combosBlk4.append(subList)
 
-        ### Parsing combinations to create histlists
+
+# In[80]:
+
+
+### Parsing combinations to create histlists
 histlists = []
 conmodelcount = 0
 combmodelcount = 0
@@ -282,6 +309,10 @@ print(' - Concatamash: ' + str(conmodelcount))
 
 print('\nTraining Sets: ' + str(len(histlists)))
 print()
+
+
+# In[81]:
+
 
 ### Data Controls and Selection - 1D Autoncoder
 
@@ -423,8 +454,44 @@ badrunsls = {"2017E":
      },
 }
 
-histnames = histlists[255]
+# Gets the full list of histograms to be added to the HistStruct
+histnames = histlists[255] 
 
+
+# In[82]:
+
+
+### Define Run Properties - Combined Autoencoder
+# in this cell all major run properties are going to be set,
+
+# Select whether to save a new histstruct
+save = False
+
+
+# In[83]:
+
+
+### Model Controls and Selection - 1D Autoencoder
+
+plotNames = 'Test'
+name = plotNames+'plots'
+
+# Choose whether to train a new model or load one
+trainnew = True
+savemodel = True
+modelname = plotNames
+
+# Bias Factors
+fmBiasFactor = 2
+wpBiasFactor = 2
+
+
+# In[84]:
+
+
+# train on a user-defined subset of runs
+    
+# Select runs to be used in training from the user-defined list
 runsls_training = {}
 runsls_bad = {}
 runsls_good = {}
@@ -436,7 +503,10 @@ for era in eras:
     runsls_good.update(goodrunsls[year + era])
 
 
-### Data Import
+# In[85]:
+
+
+# Initializations
 dloader = DataLoader.DataLoader()
 histstruct = FlexiStruct.FlexiStruct()
 histstruct.reset_histlist(histnames)
@@ -444,7 +514,7 @@ failedruns = {}
 failedls ={}
 # Unpack histnames and add every histogram individually
 consistent = True
-sys.stdout = open('HistPerm.log' , 'w')
+sys.sdout = open('HistPerm.log' , 'w')
 for era in eras:
     for histnamegroup in histnames:
         for histname in histnamegroup:
@@ -477,8 +547,11 @@ for era in eras:
             
 sys.stdout.write('\rData import complete.')
 sys.stdout.flush()
+#sys.sdout.close()
 
-# Give user information on failed imports
+# In[86]:
+
+
 runsls_total = {k: v for d in (runsls_training, runsls_good, runsls_bad) for k, v in d.items()}
 inconsistentRuns = {}
 if not consistent:
@@ -492,7 +565,8 @@ if not consistent:
     print(inconsistentRuns)
 
 
-##### FUNCTIONS SECTION #####
+# In[87]:
+
 
 ### Add Masks to Data
 def assignMasks(histstruct, runsls_training, runsls_good, runsls_bad):
@@ -514,51 +588,61 @@ def assignMasks(histstruct, runsls_training, runsls_good, runsls_bad):
         for i,badrun in enumerate(runsls_bad.keys()):
             histstruct.add_json_mask( 'bad{}'.format(i), {badrun:runsls_bad[badrun]} )
             
+    if save:
+        histstruct.save('test.pk1')
     return histstruct
 
-### Defines the autoencoders for training
+
+# In[88]:
+
+
 def define_concatamash_autoencoder(histstruct):
     
     histslist = []
     vallist = []
     autoencoders = []
-    for i,histnamegroup in enumerate(histnames):
-        
-        train_normhist = np.array([hu.normalize(histstruct.get_histograms(
-            histname = hname, masknames = ['dcson','highstat', 'training']), 
-                                                norm="l1", axis=1) 
-                                    for hname in histnamegroup]).transpose((1,0,2))
-        X_train, X_val = train_test_split(train_normhist, test_size=0.4, random_state=42)
-        
-        # Half the total bin count
-        arch = 51 * len(histnamegroup)
-        
-        ## Model parameters
-        input_dim = X_train.shape[2] #num of predictor variables
-        Input_layers=[Input(shape=input_dim) for i in range((X_train.shape[1]))]
-        
-        # Defining layers
-        conc_layer = Concatenate()(Input_layers)
-        encoder = Dense(arch * 2, activation="tanh")(conc_layer)
-        encoder = Dense(arch/2, activation='relu')(encoder)
-        encoder = Dense(arch/8, activation='relu')(encoder)
-        encoder = Dense(arch/16, activation='relu')(encoder)
-        decoder = Dense(arch/8, activation="relu")(encoder)
-        decoder = Dense(arch/2, activation='relu')(encoder)
-        decoder = Dense(arch * 2, activation="tanh")(decoder)
-        
-        Output_layers=[Dense(input_dim, activation="tanh")(decoder) for i in range(X_train.shape[1])]
+    if trainnew:
+        for i,histnamegroup in enumerate(histnames):
+            
+            train_normhist = np.array([hu.normalize(histstruct.get_histograms(
+                histname = hname, masknames = ['dcson','highstat', 'training']), 
+                                                 norm="l1", axis=1) 
+                                       for hname in histnamegroup]).transpose((1,0,2))
+            X_train, X_val = train_test_split(train_normhist, test_size=0.4, random_state=42)
+            
+            # Half the total bin count
+            arch = 51 * len(histnamegroup)
+            
+            ## Model parameters
+            input_dim = X_train.shape[2] #num of predictor variables
+            Input_layers=[Input(shape=input_dim) for i in range((X_train.shape[1]))]
+            
+            # Defining layers
+            conc_layer = Concatenate()(Input_layers)
+            encoder = Dense(arch * 2, activation="tanh")(conc_layer)
+            encoder = Dense(arch/2, activation='relu')(encoder)
+            encoder = Dense(arch/8, activation='relu')(encoder)
+            encoder = Dense(arch/16, activation='relu')(encoder)
+            decoder = Dense(arch/8, activation="relu")(encoder)
+            decoder = Dense(arch/2, activation='relu')(encoder)
+            decoder = Dense(arch * 2, activation="tanh")(decoder)
+            
+            Output_layers=[Dense(input_dim, activation="tanh")(decoder) for i in range(X_train.shape[1])]
 
-        autoencoder = Model(inputs=Input_layers, outputs=Output_layers)
-        autoencoders.append(autoencoder)
-        
-        histslist.append(X_train)
-        vallist.append(X_val)
-    
+            autoencoder = Model(inputs=Input_layers, outputs=Output_layers)
+            autoencoders.append(autoencoder)
+            
+            histslist.append(X_train)
+            vallist.append(X_val)
+     
     # Return the histograms stored 2-Dimensionally and the autoencoders corresponding
     return(histslist, vallist, autoencoders, train_normhist)
 
-### Trains a given set of autoencoders
+
+# In[89]:
+
+
+### Trains a combined autoencoder for every merge set
 def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
     
     # Iterate through the training data to train corresponding autoencoders
@@ -573,9 +657,19 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
         X_val = vallist[i]
         autoencoder = autoencoders[i]
         
+        
         ## Model parameters
         nb_epoch = 1000
         batch_size = 10000
+        
+        #checkpoint_filepath = 'checkpoint'
+        #model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        #   filepath=checkpoint_filepath,
+        #   save_weights_only=False,
+        #   verbose=1,
+        #   save_best_only=True,
+        #   monitor='val_loss',
+        #   mode='min')
         
         # Tell the model when to stop
         earlystop = EarlyStopping(monitor='val_loss',
@@ -611,117 +705,337 @@ def train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders):
         del(autoencoder, classifier)
     return autoencodersTrain
 
-### Gets MSE for a given group of histograms
-def getMSEs(histstruct, histgroup, masknames=None):
-    mse_normhist = np.array([hu.normalize(histstruct.get_histograms(
-                histname = hname, masknames = masknames), 
-                                                 norm="l1", axis=1) 
-                                       for hname in histnamegroup]).transpose((1,0,2))
+
+# In[90]:
+
+
+### Evaluate the Models for WP definition
+def evaluate_models_train(histstruct):
     
-    predictions = np.array(histstruct.classifiers[histgroup[0]].model.predict([mse_normhist[:,i] for i in range(mse_normhist.shape[1])]))
-    hists_eval = []
-    for i in range(len(histgroup)):
-        ls_eval = []
-        for ls in mse_normhist:
-            ls_eval.append(ls[i])
-        hists_eval.append(ls_eval)
-
-    # Outputs scores by histogram by lumisection
-    scoreslist = []
-    for i in range(len(histgroup)):
-        data = np.array(hists_eval[i])
-        preds = predictions[i]
-        sqdiff = np.power(data-preds,2)
-        sqdiff[:,::-1].sort()
-        sqdiff = sqdiff[:,:10]
-        mean = np.mean(sqdiff,axis=-1)
-        scoreslist.append(mean)
-    
-        histstruct.scores[histgroup[i]] = mean
-
-    return scoreslist
-
-### Get Predictions from the Models for WP definition
-def predict_models_train(histstruct, histnames):
-
-    # Iterates through every histogram and finds mses for the subsets
-    wps = {}
-    goodPreds = {}
-    badPreds = {}
-    mse_trains = []
-    mse_goods = []
-    mse_bads = []
     for histgroup in histnames:
-        mse_train = getMSEs(histstruct, histgroup, masknames=['dcson','highstat', 'training'])
-        mse_good = getMSEs(histstruct, histgroup, masknames=['dcson','highstat', 'good'])
-        mse_bad = getMSEs(histstruct, histgroup, masknames=['dcson','highstat', 'bad'])
+        histstruct.evaluate_classifier(histgroup)
+    
+    # get mse for training set
+    if 'training' in histstruct.masks.keys(): masknames = ['dcson','highstat', 'training']
+    else: masknames = ['dcson','highstat']
+    mse_train = histstruct.get_scores_array( masknames=masknames )
+    
+    # get mse for good set
+    if 'good' in histstruct.masks.keys():
+        mse_good = []
+        for histgroup in histnames:
+            for histname in histgroup:
+                mse_good.append(histstruct.get_scores( histname=histname, masknames=['dcson','highstat','good'] ))
+    else:
+        mse_good = []
+        for histgroup in histnames:
+            for histname in histgroup:
+                hists_good = hu.averagehists( histstruct.get_histograms( histname=histname, masknames=['dcson','highstat']), 1000 )
+                thismse = histstruct.classifiers[histname].evaluate( hists_good )
+                mse_good.append( thismse )
+                print(run)
+    mse_good = np.array(mse_good)
+    mse_good = np.transpose(mse_good)
+    
+    # get mse for bad sets
+    mse_bad = []
+    nbadruns = len([name for name in runsls_bad])
+    for i in range(nbadruns):
+        mse_bad.append( histstruct.get_scores_array( masknames=['dcson','highstat','bad{}'.format(i)] ) )
         
-        # Save for debugging
-        mse_trains.append(mse_train)
-        mse_goods.append(mse_good)
-        mse_bads.append(mse_bad)
+    return [mse_train, mse_good, mse_bad]
 
-        # Determine whether the model predicts each lumisection good or bad
-        for i, histname in histnamegroup:
-            wp = np.mean(mse_train[i]) + wpBiasFactor*np.std(mse_train[i])
-            wps[histname] = (wp)
 
-            goodPreds[histname] = np.where(mse_good[i] < wp, 0, 1)
-            badPreds[histname] = np.where(mse_bad[i] < wp, 0, 1)
+# In[91]:
+
+
+### Plots and Distribution Analysis
+def fit_mse_distribution(mse_good, mse_bad_list, wpBiasFactor):
+    
+    # Reshaping arrays to be easily averageable
+    mseArrays = []
+    for i in range(mse_good.shape[1]):
+        mseArrays.append(np.zeros(mse_good.shape[0]))
+    
+    for i,mseSet in enumerate(mse_good):
+        for j,mseArray in enumerate(mseArrays):
+            mseArray[i] = mseSet[j]
+    
+    # Pulling out the average good values
+    avgGood = []
+    for mseArray in mseArrays:
+        avgGood.append(np.mean(mseArray))
+    avgGood = np.array(avgGood)
+    
+    # Reshaping bad arrays to be easily averageable - this is where future implementations for picking out specific problems in data would be
+    avgBadList = []
+    for mse_bad in mse_bad_list:
+        mseArrays = []
+        for i in range(mse_bad.shape[1]):
+            mseArrays.append(np.zeros(mse_bad.shape[0]))
+        for i,mseSet in enumerate(mse_bad):
+            for j,mseArray in enumerate(mseArrays):
+                mseArray[i] = mseSet[j]
+        avgBad = []
+        for mseArray in mseArrays:
+            avgBad.append(np.mean(mseArray))
         
-    return (wps, goodPreds, badPreds, mse_trains, mse_goods, mse_bads)
-
-### Determine how well the model distinguished good/bad data
-def evaluate_models(histnames, goodPreds, badPreds):
-
-    # Getting data into format in which histograms can easily vote
-    histname = histnames[0][0]
-    goodlumiperhist = np.zeros(len(goodPreds[histname]), (len(goodPreds.keys())))
-    badlumiperhist = np.zeros(len(badPreds[histname]), (len(badPreds.keys())))
-    histcount = 0
-    for histgroup in histnames:
-        for histname in histgroup:
-            for i in range(len(goodPreds[histname])):
-                goodlumiperhist[i][histcount] = goodPreds[histname][i]
-            for i in range(len(badPreds[histname])):
-                badlumiperhist[i][histcount] = badPreds[histname][i]
+        avgBadList.append(avgBad)
     
-    goodscores = np.zeros(len(goodlumiperhist))
-    for i,lumi in enumerate(goodlumiperhist):
-        if np.sum(lumi) > badThreshold:
-            goodscores[i] = 1
-    
-    badscores = np.zeros(len(badlumiperhist))
-    for i,lumi in enumerate(badlumiperhist):
-        if np.sum(lumi) > badThreshold:
-            badscores[i] = 1
-    
-    scores = np.concatenate(goodscores, badscores)
-    labels = np.concatenate(np.zeros(len(goodscores)), np.ones(len(badscores)))
+    # Getting averages of bads
+    avgBads = np.zeros((mse_good.shape[1], len(avgBadList)))
+    print(avgBads.shape)
+    for i in range(len(avgBadList)):
+        for j in range(mse_good.shape[1]):
+            avgBads[j][i] = avgBadList[i][j]
+    avgBadsTot = np.zeros(mse_good.shape[1])
+    for i in range(mse_good.shape[1]):
+        avgBadsTot[i] = np.mean(avgBads[i])
+        
+    # Finding working points for each individual histogram (the simple approach)
+    workingPoints = np.zeros(mse_good.shape[1])
+    for i in range(len(avgBadsTot)):
+        workingPoints[i] = (1 / (1 + wpBiasFactor)) * (wpBiasFactor * avgGood[i] + avgBadsTot[i])
 
-    (tp, fp, tn, fn) = get_metrics(scores, labels)
+    sep = np.mean(avgBadsTot) - np.mean(avgGood)     
+    
+    return [workingPoints, avgGood, avgBadsTot], sep
 
+
+# In[93]:
+
+
+### Prepare MSEs for Working Point Definition
+# - Note: This test is geared towards testing. Updates are required
+#       for use with unlabeled data
+def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_split):
+    workingPoints = wpData[0]
+    
+    # Prepare data for comparison to WP
+    mse_good_test = np.array(mse_good_eval[int(wp_test_split * len(mse_good_eval)):])
+    mse_bad_eval = np.concatenate(tuple(mse_bad_list))
+    mse_bad_test = mse_bad_eval[int(wp_test_split * len(mse_bad_eval)):]
+    
+    labels_good = np.zeros(len(mse_good_test))
+    labels_bad = np.ones(len(mse_bad_test))
+    
+    # Percentage of histograms with issues to flag an anomaly
+    testWeight = 3
+    # Check each histogram and if a sufficient number are anomalous, flag the lumisection
+    anomalousList = []
+    preds_good = np.zeros(len(mse_good_test))
+    for i,lumi in enumerate(mse_good_test):
+        values = np.ones(len(lumi[lumi > workingPoints]))
+        if np.sum(values) > testWeight:
+            preds_good[i] = 1
+    
+    # Same, but with known bad data
+    preds_bad = np.zeros(len(mse_bad_test))
+    for i, lumi in enumerate(mse_bad_test):
+        values = np.ones(len(lumi[lumi > workingPoints]))
+        anomalousList.append(np.where(lumi > workingPoints, True, False))
+        if np.sum(values) > (testWeight):
+            preds_bad[i] = 1
+            
+    labels = np.concatenate(tuple([labels_good, labels_bad]))
+    scores = np.concatenate(tuple([preds_good, preds_bad]))
+    
+    (tp, fp, tn, fn) = get_confusion_matrix(scores,labels)
+
+    # Get metrics for analysis
     accuracy = (tp + tn) / (tp + fp + tn + fn)
-    precision = (tp) / (tp + fp)
-    recall = (tp) / (tp + fn)
-    f_measure = (1 + fmBiasFactor * fmBiasFactor) * ((precision * recall) / ((fmBiasFactor * fmBiasFactor * precision) + recall)) 
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    if np.isnan(precision): precision = 0
+    if np.isnan(recall): recall = 0
+    try:
+        f_measure = (1 + fmBiasFactor * fmBiasFactor) * ((precision * recall) / ((fmBiasFactor * fmBiasFactor * precision) + recall)) 
+    except RuntimeWarning:
+        f_measure = 0
+    if np.isnan(f_measure): f_measure = 0
 
-    return accuracy, precision, recall, f_measure
+    return (f_measure, accuracy, precision, recall)
 
-### returns data for calculating metrics
-def get_metrics(scores, labels):
-   
+# In[94]:
+
+
+def get_confusion_matrix(scores, labels):
+    ### plot a confusion matrix
+    # input arguments:
+    # - scores and labels: defined in the same way as for get_roc
+    # - wp: the chosen working point 
+    #       (i.e. any score above wp is flagged as signal, any below is flagged as background)
+    #       note: wp can be a integer or float, in which case that value will be used directly,
+    #             or it can be a string in which case it will be used as the 'method' argument in get_wp!
+    # - plotwp: only relevant if wp is a string (see above), in which case plotwp will be used as the 'doplot' argument in get_wp
+
     nsig = np.sum(labels)
     nback = np.sum(1-labels)
 
     # get confusion matrix entries
     tp = np.sum(np.where((labels==1) & (scores==1),1,0))/nsig
-    fp = np.sum(np.where((labels==0) & (scores==1),1,0))/nback
     tn = np.sum(np.where((labels==0) & (scores==0),1,0))/nback
-    fn = np.sum(np.where((labels==1) & (scores==0),1,0))/nsig
+    fp = 1-tn
+    fn = 1-tp
 
+    
+    # old plotting method with seaborn
+    #df_cm = pd.DataFrame(cmat, index = [true_negative_label,true_positive_label],
+    #              columns = [predicted_negative_label,predicted_positive_label])
+    #fig,ax = plt.subplots()
+    #sn.heatmap(df_cm, annot=True, cmap=plt.cm.Blues)
+    
+    # new plotting method with pyplot
+
+    # printouts for testing
+    #print('working point: {}'.format(wp))
+    #print('nsig: {}'.format(nsig))
+    #print('nback: {}'.format(nback))
+    #print('true positive / nsig: {}'.format(tp))
+    #print('false positive / nback: {}'.format(fp))
+
+    # return the working point (for later use if it was automatically calculated)
     return (tp, fp, tn, fn)
 
+
+# In[95]:
+
+
+### Function to print memory information for debugging memory leaks
+import linecache
+import os
+import tracemalloc
+
+def display_top(snapshot, key_type='lineno', limit=3):
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+    ))
+    top_stats = snapshot.statistics(key_type)
+
+    print("Top %s lines" % limit)
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        # replace "/path/to/module/file.py" with "module/file.py"
+        filename = os.sep.join(frame.filename.split(os.sep)[-2:])
+        print("#%s: %s:%s: %.1f KiB"
+              % (index, filename, frame.lineno, stat.size / 1024))
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        if line:
+            print('    %s' % line)
+
+    other = top_stats[limit:]
+    if other:
+        size = sum(stat.size for stat in other)
+        print("%s other: %.1f KiB" % (len(other), size / 1024))
+    total = sum(stat.size for stat in top_stats)
+    print("Total allocated size: %.1f KiB" % (total / 1024))
+
+
+# In[100]:
+
+
+### Loop it Fxn
+def masterLoop(aeStats, numModels, histnames, histstruct, debug, i):
+    try:
+        updateCheck = False
+        percComp = (numModels/conmodelcount)*100
+        print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
+        
+        # Update histlist to reflect new data
+        histstruct.reset_histlist(histnames, suppress=True)
+        assignMasks(histstruct, runsls_training, runsls_good, runsls_bad)
+        
+        # Build autoencoders based on new data
+        (histslist, vallist, autoencoders, train_normhist) = define_concatamash_autoencoder(histstruct)
+        
+        # Train autoencoders based on current histlist and record speed
+        start = time.perf_counter()
+        
+        # Suppres Unhelpful Error Messages
+        orig_out = sys.stderr
+        sys.stderr = open('trash', 'w')
+        autoencoders = train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders)
+        sys.stderr = orig_out
+        
+        localmodelcount = len(autoencoders)
+        numModels += localmodelcount
+        updateCheck = True
+        
+        stop = time.perf_counter()
+        trainTime = stop - start
+        
+        sys.stdout.write('\rTraining complete in ' + str(trainTime) + ' seconds')
+        sys.stdout.flush()
+        print()
+        
+        # Evaluate models
+        (mse_train, mse_good_eval, mse_bad_eval) = evaluate_models_train(histstruct)
+        # Fraction of MSEs to use in WP definition vs testing
+        wp_test_split = 0.6
+        (wpData, sep) = fit_mse_distribution(mse_good_eval[:int(wp_test_split * len(mse_good_eval))], mse_bad_eval[:int(wp_test_split * len(mse_bad_eval))], wpBiasFactor)
+        (f_measure, accuracy, precision, recall) = evaluate_autoencoders_combined(mse_good_eval, mse_bad_eval, wpData, wp_test_split)
+
+        gpu_check()    
+
+        for j, autoencoder in enumerate(autoencoders):
+            autoencoder.save('../SavedModels/Permutations/Job' + str(i + 1) + '/AE' + str(j))
+        del(autoencoders)
+        # Creating a debug file for assessing autoencoder postprocessing
+        debug.append([mse_train, mse_good_eval, mse_bad_eval, wpData])
+        debugAr = np.array(debug)
+        np.save('./DebugData/Debug', arr = debugAr)
+
+        # Empty list
+        dataPackage = [histnames, i + 1, trainTime, sep, f_measure, accuracy, precision, recall]
+        if len(aeStats) < 1:
+            aeStats.append(dataPackage)
+            print('New Best Model:')
+            
+        # Non-empty List
+        else:
+            for j in range(len(aeStats) - 1, -1, -1):
+                if f_measure < aeStats[j][4]:
+                    aeStats.insert(j+1, dataPackage)
+                    print('Model Position: ' + str(j + 1))
+                    break
+                elif f_measure == aeStats[j][4]:
+                    if accuracy < aeStats[j][5]:
+                        aeStats.insert(j+1, dataPackage)
+                        print('Model Position: ' + str(j + 1))
+                        break
+                # Reached end of list
+                if j == 0:
+                    aeStats.insert(j, dataPackage)
+                    print('New Best Model:')
+        print(' - Train Time: ' + str(trainTime))
+        print(' - Separability: ' + str(sep))
+        print(' - Accuracy: ' + str(accuracy))
+        print(' - Precision: ' + str(precision))
+        print(' - Recall: ' + str(recall))
+        print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
+        print(' - WP Sample: ' + str(wpData[0][0]))        
+        print()
+    except tf.errors.ResourceExhaustedError as e:
+         i -= 1
+         print('Insufficient Resources! Waiting...')
+         time.sleep(30)
+         if updateCheck: numModels -= localmodelcount
+         return(aeStats, numModels, debug, i)
+    except MemoryError as e:
+        print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
+        print('ERROR encountered in job {}. Exiting...'.format(i+1))
+        aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
+        raise MemoryError(e)
+    except Exception as e:
+        print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
+        print('ERROR encountered in job {}. Continuing...'.format(i+1))
+        print(e)
+        aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
+    return aeStats, numModels, debug, i
+
+
+# In[ ]:
 ### Function to prevent exhausting shared resources
 def gpu_check():
     # Prevents crashing on CPU only runs
@@ -732,109 +1046,27 @@ def gpu_check():
     # Get peak memory usage of GPU
     usage = tf.config.experimental.get_memory_info('GPU:0')
     print('Using {} GB of GPU Memory'.format(usage['peak'] / 1000000000.0))
-    if usage['peak'] > 4000000000.0:
+    if usage['peak'] > 7000000000.0:
         raise MemoryError('Excessive GPU Memory Usage!')
 
-### Function for main loop operations
-def loopable(histstruct, histnames, numModels, aeStats, debug, i):
-    try:
-        percComp = (numModels/conmodelcount)*100
-        print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
-
-        # Update histlist to reflect new data
-        histstruct.reset_histlist(histnames, suppress=True)
-        assignMasks(histstruct, runsls_training, runsls_good, runsls_bad)
-
-        (histslist, vallist, autoencoders, _) = define_concatamash_autoencoder(histstruct)
-
-        # Train autoencoders based on current histlist and record speed
-        start = time.perf_counter()
-
-        # Suppress Unhelpful Error Messages
-        orig_out = sys.stderr
-        sys.stderr = open('trash', 'w')
-        autoencoders = train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders)
-        gpu_check()
-        sys.stderr = orig_out
-        
-        # Gets data for status update to user
-        numModels += len(autoencoders)
-
-        stop = time.perf_counter()
-        trainTime = stop - start
-
-        # Run model prediction
-        (wps, goodPreds, badPreds, mse_trains, mse_goods, mse_bads) = predict_models_train(histstruct, histnames)
-
-        (accuracy, precision, recall, f_measure) = evaluate_models(histnames, goodPreds, badPreds)
-
-        debug.append([wps, mse_trains, mse_goods, mse_bads])
-        dataPackage = [histnames, i + 1, trainTime, f_measure, accuracy, precision, recall]
-        if len(aeStats) < 1:
-            aeStats.append(dataPackage)
-            print('New Best Model:')
-            
-        # Non-empty List
-        else:
-            for j in range(len(aeStats) - 1, -1, -1):
-                if f_measure < (aeStats[j][3]):
-                    aeStats.insert(j+1, dataPackage)
-                    print('Model Position: ' + str(j + 1))
-                    break
-
-                elif f_measure == aeStats[j][3]:
-                    if accuracy < aeStats[j][4]:
-                        aeStats.insert(j+1, dataPackage)
-                        print('Model Position: ' + str(j + 1))
-                        break
-                # Reached end of list
-                if j == 0:
-                    aeStats.insert(j, dataPackage)
-                    print('New Best Model:')
-        
-        # Prints every time
-        print(' - Train Time: ' + str(trainTime))
-        print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
-        print(' - Accuracy: ' + str(accuracy))
-
-        return(numModels, aeStats, debug, i)
-
-    # In case someone else is using all the resources, wait and try again
-    except tf.errors.ResourceExhaustedError as e:
-        i -= 1
-        print('Insufficient Resources! Waiting...')
-        time.sleep(30)
-        return(numModels, aeStats, debug, i)
-    
-    # If this program is overutilizing memory, kill the process
-    except MemoryError as e:
-        print('Overutilization detected! Exiting...')
-        raise Exception('Excessive Memory Usage!')
-    
-    # Other random exceptions are inconsequential and can be passed over
-    except Exception as e:
-        print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
-        print('ERROR encountered in job {}. Continuing...'.format(i+1))
-        print(e)
-        aeStats.append(['ERROR', i + 1, 0, 0, 0, 0, 0])
-        return(numModels, aeStats, debug, i)
-        
-### Master Loop
+### Main loop to iterate through possible histlists
+userfriendly = True
 aeStats = []
 debug = []
 numModels = 0
-for i in range(len(histlists)):
-    # Execute the main loop ops in a function to prevent memory leaks
-    (numModels, aeStats, debug, i) = loopable(histstruct, histlists[i], numModels, aeStats, debug, i)
-    
-    # Save data for later examination
-    df = pd.DataFrame(aeStats, columns=['Histnames', 'Job', 'Training Time', 'F_measure', 'Accuracy', 'Precision', 'Recall'])
-    csvu.write_csv(df, 'Top50.csv')
-    debugAr = np.array(debug)
-    np.save('./DebugData/Debug', arr=debugAr, allow_pickle=True)
-
-    # Ensure memory is cleared
+i = 0
+#sys.sdout = open('HistPerm.log' , 'w')
+while i < (len(histlists)):
+    histnames = histlists[i]
+    #tracemalloc.start()
+    (aeStats, numModels, debug, i) = masterLoop(aeStats, numModels, histnames, histstruct, debug, i)
+    #snapshot = tracemalloc.take_snapshot()
+    #display_top(snapshot)
+    if len(aeStats) > 0:
+        df = pd.DataFrame(aeStats, columns=['Histnames', 'Job', 'Train Time', 'Average Separation', 'F_Measure', 'Accuracy', 'Precision', 'Recall'])
+        csvu.write_csv(df, 'Top50.csv')
     gc.collect()
     K.clear_session()
+    i += 1
 
-sys.stdout.close()
+sys.sdout.close()
