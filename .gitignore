@@ -19,3 +19,4 @@ data/Complete_Runs
 *.log
 *.npy
 /SavedModels/*
+/KH-AutoencoderTest/DebugData/*
