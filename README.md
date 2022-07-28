@@ -4,6 +4,8 @@ This fork contains some example code and experiments for the ML4DQM/DC project.
 
 The original repository contains some example code that has been used to create the projects in this fork. The basic concept behind much of the work here is using autoencoders to detect anomalies in per-lumisection histograms for increased granularity and automation. Specifically, the projects here focus on finding ways to merge histograms (thus training fewer models) or on ways to determine what data is most important for classifying histograms. 
 
+# Before you Begin: Make sure to run the `DataPreprocess.ipynb` notebook in `Support Notebooks` to ensure data is available for use
+
 In more detail:
 
 - The projects here are primarily designed to support 1D histograms, however 2D implementation should not be a difficult task. 
