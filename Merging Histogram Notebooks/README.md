@@ -17,3 +17,23 @@ The concept of merging is essentially aimed at training fewer models. The goal i
 ### 1D Autoencoder
 
 ![alt text](https://github.com/kyh57363/ML4DQMDC-PixelAE/blob/master/Graphics/1D%20w%20Background.png?raw=true)
+
+This is the method Jack Sisson created. As shown, the data is all immediately merged together and a single autoencoder is trained on the outcome. The training time is exceptional, but the loss of granularity and preprocessing required make this a poor choice. 
+
+### Combined Autoencoder
+
+![alt text](https://github.com/kyh57363/ML4DQMDC-PixelAE/blob/master/Graphics/Combined.png?raw=true)
+
+This is the method implemented in the original reposity this one forks. The method trains an autoencoder on every histogram. There is virtually no preprocessing, but training time is long since there are many models.
+
+### 1D Mash
+
+![alt text](https://github.com/kyh57363/ML4DQMDC-PixelAE/blob/master/Graphics/1D%Mash.png.png?raw=true)
+
+This was the first method at merging the two approaches, combining some histograms before training and then use the same method as combined to get the results. Though it restores some granularity from the 1D method and recovers training time over the Combined method, the 1D Mash has the greatest preprocessing overhead and is a little clunky. 
+
+### Concatamash
+
+![alt text](https://github.com/kyh57363/ML4DQMDC-PixelAE/blob/master/Graphics/Concatamash.png?raw=true)
+
+This is the final and, so far, best implementation of merging histograms. The data flow is essentially the same as combined, but with the bonus of training fewer models. The preprocessing overhead is eliminated over the 1D Mash and the full granularity of Combined is possible with less training time. 
