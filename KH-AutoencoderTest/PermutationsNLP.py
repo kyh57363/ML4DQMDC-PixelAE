@@ -985,7 +985,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug, i):
         # Creating a debug file for assessing autoencoder postprocessing
         debug.append([mse_train, mse_good_eval, mse_bad_eval, wpData])
         debugAr = np.array(debug)
-        np.save('./DebugData/Debug', arr = debugAr)
+        np.save('./Output Data/DebugData/Debug', arr = debugAr)
 
         # Empty list
         dataPackage = [histnames, i + 1, trainTime, sep, f_measure, accuracy, precision, recall]
@@ -1065,7 +1065,7 @@ while i < (len(histlists)):
     #display_top(snapshot)
     if len(aeStats) > 0:
         df = pd.DataFrame(aeStats, columns=['Histnames', 'Job', 'Train Time', 'Average Separation', 'F_Measure', 'Accuracy', 'Precision', 'Recall'])
-        csvu.write_csv(df, 'Top50.csv')
+        csvu.write_csv(df, '../Output Data/Top50.csv')
     gc.collect()
     K.clear_session()
     i += 1
