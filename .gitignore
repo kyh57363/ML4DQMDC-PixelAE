@@ -17,3 +17,5 @@ data/Complete_Runs
 *.pb
 *.index
 *.log
+*.npy
+
