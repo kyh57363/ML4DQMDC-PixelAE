@@ -546,11 +546,7 @@ for era in eras:
                 failedls[histname] = dfu.get_ls(df)
                 consistent = False
             
-<<<<<<< HEAD
 sys.stdout.write('\rData import complete.\n\n')
-=======
-sys.stdout.write('\rData import complete.\n')
->>>>>>> 635abd6fce031baaff8f23309869189a65a39628
 sys.stdout.flush()
 #sys.sdout.close()
 
@@ -823,11 +819,9 @@ def evaluate_autoencoders_combined(mse_good_eval, mse_bad_list, wpData, wp_test_
     labels_bad = np.ones(len(mse_bad_test))
     
     # Percentage of histograms with issues to flag an anomaly
-<<<<<<< HEAD
+
     testWeight = 2
-=======
-    testWeight = 3
->>>>>>> 635abd6fce031baaff8f23309869189a65a39628
+
     # Check each histogram and if a sufficient number are anomalous, flag the lumisection
     anomalousList = []
     preds_good = np.zeros(len(mse_good_test))
@@ -991,11 +985,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct, debug, i):
         # Creating a debug file for assessing autoencoder postprocessing
         debug.append([mse_train, mse_good_eval, mse_bad_eval, wpData])
         debugAr = np.array(debug)
-<<<<<<< HEAD
-        np.save('./DebugData', arr = debugAr)
-=======
         np.save('./DebugData/Debug', arr = debugAr)
->>>>>>> 635abd6fce031baaff8f23309869189a65a39628
 
         # Empty list
         dataPackage = [histnames, i + 1, trainTime, sep, f_measure, accuracy, precision, recall]
@@ -1080,8 +1070,4 @@ while i < (len(histlists)):
     K.clear_session()
     i += 1
 
-<<<<<<< HEAD
-#sys.sdout.close()
-=======
 sys.sdout.close()
->>>>>>> 635abd6fce031baaff8f23309869189a65a39628
