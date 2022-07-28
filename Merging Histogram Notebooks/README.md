@@ -12,7 +12,7 @@ In more detail:
 
 ## Merging Concept
 
-The concept of merging is essentially aimed at training fewer models. The goal is to save time and resource consumption without losing capability. There are currently two types of autoencoders which do not implement merging: 
+The concept of merging is essentially aimed at training fewer models. The goal is to save time and resource consumption without losing capability. There are currently four types of autoencoders with various amounts of merging implemented: 
 
 ### 1D Autoencoder
 
