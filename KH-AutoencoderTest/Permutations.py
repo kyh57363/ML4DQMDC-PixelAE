@@ -294,7 +294,7 @@ for combo1 in combosBlk1:
                             filename = 'DF' + year + era + '_' + hist +'.csv'
                             path = datadir[year + era] + filename
                             if not os.path.exists(path):
-                                raise Exception('Histogram {} does not exist!'.format(hist))
+                                raise Exception('Histogram {} does not exist in era {}!'.format(hist, era) + ' Using path ' + str(path))
                 histlists.append(curList)
                 
 for histlist in histlists:
@@ -455,7 +455,6 @@ badrunsls = {"2017E":
 
 # Gets the full list of histograms to be added to the HistStruct
 histnames = histlists[255] 
-
 
 # In[82]:
 
