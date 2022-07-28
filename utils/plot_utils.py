@@ -779,7 +779,7 @@ def plot_confusion_matrix( tp, tn, fp, fn,
                           pred_positive_label='Predicted good', pred_negative_label='Predicted anomalous',
                           xaxlabelsize=None, yaxlabelsize=None, textsize=None,
                           colormap='Blues', colortitle=None ):
-    cmat = np.array([[tp,fn],[fp,tn]])
+    cmat = np.array([[tp,fp],[fn,tn]])
     fig,ax = plt.subplots()
     norm = mpl.colors.Normalize(0,1)
     alpha = 1
