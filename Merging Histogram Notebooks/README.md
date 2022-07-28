@@ -8,3 +8,12 @@ In more detail:
 - `Concatamash.ipynb`: a sample notebook of how to create and train a Concatamash model. This model works on the same principle as the 1D mash, but instead combines the histograms in the training of the model. In this way, the preprocessing and postprocessing are nearly identical to the Combined autoencoder, but the training step is different. The concatenation is controlled in the same way as the 1DMash autoencoder, with the histlist. 
 
 - `AEComparisons.ipynb`/`AEComparisons.py`: a python script and its notebook representation for comparing the different types of autoencoders. It uses common metrics to determine which autoencoder performed the best in testing and compares things such as training time. 
+
+
+## Merging Concept
+
+The concept of merging is essentially aimed at training fewer models. The goal is to save time and resource consumption without losing capability. There are currently two types of autoencoders which do not implement merging: 
+
+### 1D Autoencoder
+
+![alt text](https://github.com/kyh57363/ML4DQMDC-PixelAE/blob/master/Graphics/1D%20w%20Background.png?raw=true)
