@@ -17,3 +17,6 @@ data/Complete_Runs
 *.pb
 *.index
 *.log
+*.npy
+/SavedModels/*
+/KH-AutoencoderTest/DebugData/*

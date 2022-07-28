@@ -113,5 +113,5 @@ class SubHistStruct( HistStruct.HistStruct ):
                 self.scores[histgroup[i]] = scores
                 scoreslist.append(scores)
             
-            return scoreslistz
+            return scoreslist
         

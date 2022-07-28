@@ -15,7 +15,7 @@
 import numpy as np
 import tensorflow as tf
 from keras import backend as K
-#import seaborn as sn
+import seaborn as sn
 import pandas as pd
 import matplotlib.pyplot as plt
 import importlib
@@ -232,8 +232,8 @@ def get_confusion_matrix(scores, labels, wp='maxauc', plotwp=True,
     # get confusion matrix entries
     tp = np.sum(np.where((labels==1) & (scores>wp),1,0))/nsig
     fp = np.sum(np.where((labels==0) & (scores>wp),1,0))/nback
-    tn = 1-fp
-    fn = 1-tp
+    tn = 1 - fp
+    fn = 1- tp
     cmat = np.array([[tp,fn],[fp,tn]])
     
     # old plotting method with seaborn

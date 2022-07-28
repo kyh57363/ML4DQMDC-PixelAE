@@ -585,7 +585,6 @@ def plot_score_dist( scores, labels, fig=None, ax=None,
     if xaxtitle is not None: ax.set_xlabel(xaxtitle, fontsize=xaxtitlesize)
     if yaxtitle is not None: ax.set_ylabel(yaxtitle, fontsize=yaxtitlesize)
     ax.legend( loc=legendloc, fontsize=legendsize )
-    ax.autoscale()
     if doshow: plt.show(block=False)
     return (fig,ax)
 
@@ -780,7 +779,7 @@ def plot_confusion_matrix( tp, tn, fp, fn,
                           pred_positive_label='Predicted good', pred_negative_label='Predicted anomalous',
                           xaxlabelsize=None, yaxlabelsize=None, textsize=None,
                           colormap='Blues', colortitle=None ):
-    cmat = np.array([[tp,fn],[fp,tn]])
+    cmat = np.array([[tp,fp],[fn,tn]])
     fig,ax = plt.subplots()
     norm = mpl.colors.Normalize(0,1)
     alpha = 1
