@@ -28,6 +28,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import Input, Dense, Concatenate
 from tensorflow.keras.models import Model
 import importlib
+import psutil
 
 # Necessary to keep GPU usage to a minimum
 from tensorflow.compat.v1 import ConfigProto
@@ -512,7 +513,7 @@ failedruns = {}
 failedls ={}
 # Unpack histnames and add every histogram individually
 consistent = True
-sys.stdout = open('HistPerm.log' , 'w')
+#sys.stdout = open('HistPerm.log' , 'w')
 for era in eras:
     for histnamegroup in histnames:
         for histname in histnamegroup:
@@ -543,9 +544,9 @@ for era in eras:
                 failedls[histname] = dfu.get_ls(df)
                 consistent = False
             
-sys.stdout.write('\rData import complete.')
+sys.stdout.write('\rData import complete.\n\n')
 sys.stdout.flush()
-sys.stdout.close()
+#sys.stdout.close()
 
 # In[86]:
 
@@ -953,7 +954,7 @@ def display_top(snapshot, key_type='lineno', limit=3):
 
 
 ### Loop it Fxn
-def masterLoop(aeStats, numModels, histnames, histstruct):
+def masterLoop(aeStats, numModels, histnames, histstruct, i):
     try:
         percComp = (numModels/conmodelcount)*100
         print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
@@ -974,7 +975,9 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
         autoencoders = train_concatamash_autoencoder(histstruct, histslist, vallist, autoencoders)
         sys.stderr = orig_out
         
+        localmodelcount = len(autoencoders)
         numModels += len(autoencoders)
+        updateCheck = True
         
         stop = time.perf_counter()
         trainTime = stop - start
@@ -1010,10 +1013,10 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
         compare = (sepPercG + sepPercB) / 2
         
         # Creating a debug file for assessing autoencoder postprocessing
-        debug = []
-        debug.append([mse_train, mse_good_eval, mse_bad_eval, logprob_good, logprob_bad, logprob_threshold])
-        df = pd.DataFrame(debug, columns=['TrainMSE', 'GoodMSE', 'BadMSE', 'LPGood', 'LPBad', 'LPThreshold'])
-        csvu.write_csv(df, 'Debug.csv')
+        np.savetxt('./DebugData/Train/T{}.csv'.format(i + 1), mse_train, delimiter=',')
+        np.savetxt('./DebugData/Good/G{}.csv'.format(i + 1), mse_good_eval, delimiter=',')
+        for j in range(len(mse_bad_eval)):
+            np.savetxt('./DebugData/Bad/B{}p{}.csv'.format(i + 1, j), mse_bad_eval[j], delimiter=',')
 
         # Empty list
         dataPackage = [histnames, i + 1, trainTime, sepPercG, sep, f_measure, logprob_threshold, separability, sepPercB]
@@ -1031,7 +1034,7 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
             for j in range(len(aeStats) - 1, -1, -1):
                 if compare < (aeStats[j][3] + aeStats[j][8]) / 2:
                     aeStats.insert(j+1, dataPackage)
-                    print('Model Position: ' + str(j))
+                    print('Model Position: ' + str(j + 1))
                     print(' - Train Time: ' + str(trainTime))
                     print(' - Separable Percent Bad: ' + str(sepPercB))
                     print(' - Separable Percent Good: ' + str(sepPercG))
@@ -1057,38 +1060,60 @@ def masterLoop(aeStats, numModels, histnames, histstruct):
                     print(' - Separable Percent Good: ' + str(sepPercG))
                     print(' - Separability: ' + str(separability))
                     print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
-                
+        print(' - LogProb Threshold: ' + str(logprob_threshold))        
         print()
+    except tf.errors.ResourceExhaustedError as e:
+         i -= 1
+         print('Insufficient Resources! Waiting...')
+         time.sleep(30)
+         if updateCheck: numModels -= localmodelcount
+         return(aeStats, numModels, i)
+    except MemoryError as e:
+        print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
+        print('ERROR encountered in job {}. Exiting...'.format(i+1))
+        aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
+        raise MemoryError(e)
     except Exception as e:
         print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
-        print('ERROR encountered in job.. continuing ' + str(i+1))
+        print('ERROR encountered in job {}. Continuing...'.format(i+1))
         print(e)
         aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
-    return aeStats, numModels
+    return aeStats, numModels, i
 
 
 # In[ ]:
+### Function to prevent exhausting shared resources
 def gpu_check():
-    usage = tf.config.experimental.get_memory_usage('GPU:0')
-    print('Using {} GB of GPU Memory'.format(usage / 1000000000.0))
-    if usage > 6000000000:
-        raise Exception('Excessive GPU Memory Usage!')
+    # Prevents crashing on CPU only runs
+    if len(tf.config.list_physical_devices('GPU')) < 1:
+        if (psutil.virtual_memory()[1] / psutil.virtual_memory()[0]) < 0.15:
+            raise MemoryError('Excessive RAM Usage!')
+        return
+    # Get peak memory usage of GPU
+    usage = tf.config.experimental.get_memory_info('GPU:0')
+    print('Using {} GB of GPU Memory'.format(usage['peak'] / 1000000000.0))
+    if usage['peak'] > 7000000000.0:
+        raise MemoryError('Excessive GPU Memory Usage!')
 
 ### Main loop to iterate through possible histlists
 userfriendly = True
 aeStats = []
 numModels = 0
-sys.stdout = open('HistPerm.log' , 'w')
-for i,histnames in enumerate(histlists):
+i = 0
+# sys.stdout = open('HistPerm.log' , 'w')
+while i < len(histlists):
+    histnames = histlists[i]
     #tracemalloc.start()
-    (aeStats, numModels) = masterLoop(aeStats, numModels, histnames, histstruct)
+    (aeStats, numModels, i) = masterLoop(aeStats, numModels, histnames, histstruct, i)
     #snapshot = tracemalloc.take_snapshot()
     #display_top(snapshot)
-    df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time',
+    if len(aeStats) > 0:
+        df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time',
                                    'Separable Percent Good', 'Worst Case Separation',
                                    'F_measure', 'Working Point', 'Separability', 'Separable Percent Bad'])
-    csvu.write_csv(df, 'Top50.csv')
+        csvu.write_csv(df, 'Top50.csv')
     gc.collect()
     K.clear_session()
+    i += 1
 
 sys.stdout.close()
