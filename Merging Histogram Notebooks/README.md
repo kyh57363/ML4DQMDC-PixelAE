@@ -28,7 +28,7 @@ This is the method implemented in the original reposity this one forks. The meth
 
 ### 1D Mash
 
-![alt text](https://github.com/kyh57363/ML4DQMDC-PixelAE/blob/master/Graphics/1D%Mash.png.png?raw=true)
+![alt text](https://github.com/kyh57363/ML4DQMDC-PixelAE/blob/master/Graphics/1D%20Mash.png.png?raw=true)
 
 This was the first method at merging the two approaches, combining some histograms before training and then use the same method as combined to get the results. Though it restores some granularity from the 1D method and recovers training time over the Combined method, the 1D Mash has the greatest preprocessing overhead and is a little clunky. 
 
