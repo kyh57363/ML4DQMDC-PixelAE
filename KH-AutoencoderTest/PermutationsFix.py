@@ -349,7 +349,7 @@ badruns = {"2017B":
 rundict = jsonu.loadjson('../jsons/CertHelperRefRuns.json')
 
 # Select run numbers to get the references for
-runNums = [297047 300079, 303824, 306422]
+runNums = [297047, 300079, 303824, 306422]
 refRuns = []
 eras = []
 years = []
