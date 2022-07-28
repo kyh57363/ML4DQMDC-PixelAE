@@ -1268,7 +1268,7 @@ print(' - Combine: ' + str(max(combineSco)))
 print(' - 1DMash: ' + str(max(oneDSco)))
 print()
 
-print('Best F_Score: ')
+print('Worst F_Score: ')
 print(' - Concatamash: ' + str(min(concatSco)))
 print(' - Combine: ' + str(min(combineSco)))
 print(' - 1DMash: ' + str(min(oneDSco)))
