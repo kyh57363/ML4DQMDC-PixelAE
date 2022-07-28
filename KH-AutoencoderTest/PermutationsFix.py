@@ -349,7 +349,7 @@ badruns = {"2017B":
 rundict = jsonu.loadjson('../jsons/CertHelperRefRuns.json')
 
 # Select run numbers to get the references for
-runNums = [300079, 303824, 306422, 297047]
+runNums = [297047 300079, 303824, 306422]
 refRuns = []
 eras = []
 years = []
@@ -406,7 +406,8 @@ for runNum in runNums:
 if len(years) != 1: raise Exception('Year of length 0 or >1 unimplemented!')
 
 # Gets the full list of histograms to be added to the HistStruct
-histnames = histlists[255] 
+histnames = histlists[0]
+histlists = [histnames] 
 
 
 # In[82]:
@@ -910,7 +911,8 @@ def display_top(snapshot, key_type='lineno', limit=3):
 
 ### Loop it Fxn
 def masterLoop(aeStats, numModels, histnames, histstruct, i):
-    try:
+    # try:
+    if True:
         percComp = (numModels/conmodelcount)*100
         print('Running Job {}/'.format(i+1) + str(len(histlists)) + ' - {:.2f}% Complete'.format(percComp))
         
@@ -1017,22 +1019,22 @@ def masterLoop(aeStats, numModels, histnames, histstruct, i):
                     print(' - F{}-Measure: '.format(fmBiasFactor) + str(f_measure))
         print(' - LogProb Threshold: ' + str(logprob_threshold))        
         print()
-    except tf.errors.ResourceExhaustedError as e:
-         i -= 1
-         print('Insufficient Resources! Waiting...')
-         time.sleep(30)
-         if updateCheck: numModels -= localmodelcount
-         return(aeStats, numModels, i)
-    except MemoryError as e:
-        print('ERROR: Overuse of resources ' + str(i+1), file=sys.stderr)
-        print('ERROR: Overuse of resources in job {}. Exiting...'.format(i+1))
-        aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
-        raise MemoryError(e)
-    except Exception as e:
-        print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
-        print('ERROR encountered in job {}. Continuing...'.format(i+1))
-        print(e)
-        aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
+    # except tf.errors.ResourceExhaustedError as e:
+    #      i -= 1
+    #      print('Insufficient Resources! Waiting...')
+    #      time.sleep(30)
+    #      if updateCheck: numModels -= localmodelcount
+    #      return(aeStats, numModels, i)
+    # except MemoryError as e:
+    #     print('ERROR: Overuse of resources ' + str(i+1), file=sys.stderr)
+    #     print('ERROR: Overuse of resources in job {}. Exiting...'.format(i+1))
+    #     aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
+    #     raise MemoryError(e)
+    # except Exception as e:
+    #     print('ERROR: Encountered exception in job ' + str(i+1), file=sys.stderr)
+    #     print('ERROR encountered in job {}. Continuing...'.format(i+1))
+    #     print(e)
+    #     aeStats.append(['ERROR', i + 1, 0, 0.0, 0, 0.0, 0, 0, 0])
     return aeStats, numModels, i
 
 
