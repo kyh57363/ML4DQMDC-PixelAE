@@ -970,10 +970,10 @@ def masterLoop(aeStats, numModels, histnames, histstruct, i):
         compare = (sepPercG + sepPercB) / 2
         
         # Creating a debug file for assessing autoencoder postprocessing
-        np.savetxt('./DebugData/Train/T{}.csv'.format(i + 1), mse_train, delimiter=',')
-        np.savetxt('./DebugData/Good/G{}.csv'.format(i + 1), mse_good_eval, delimiter=',')
+        np.savetxt('../Output Data/DebugData/Train/T{}.csv'.format(i + 1), mse_train, delimiter=',')
+        np.savetxt('../Output Data/DebugData/Good/G{}.csv'.format(i + 1), mse_good_eval, delimiter=',')
         for j in range(len(mse_bad_eval)):
-            np.savetxt('./DebugData/Bad/B{}p{}.csv'.format(i + 1, j), mse_bad_eval[j], delimiter=',')
+            np.savetxt('../Output Data/DebugData/Bad/B{}p{}.csv'.format(i + 1, j), mse_bad_eval[j], delimiter=',')
 
         # Empty list
         dataPackage = [histnames, i + 1, trainTime, sepPercG, sep, f_measure, logprob_threshold, separability, sepPercB]
@@ -1068,7 +1068,7 @@ while i < len(histlists):
         df = pd.DataFrame(aeStats, columns=['Histlist', 'Job', 'Train Time',
                                    'Separable Percent Good', 'Worst Case Separation',
                                    'F_measure', 'Working Point', 'Separability', 'Separable Percent Bad'])
-        csvu.write_csv(df, 'Top50.csv')
+        csvu.write_csv(df, '../Output Data/Top50.csv')
     gc.collect()
     K.clear_session()
     i += 1
