@@ -48,7 +48,7 @@ Some tutorials are located in the tutorials folder in this repository, that shou
 - Log in to SWAN.  
 - Go to Projects.  
 - Click the cloud icon that says 'Download Project from git'  
-- Paste the following url: [https://github.com/LukaLambrecht/ML4DQM-DC.git](https://github.com/LukaLambrecht/ML4DQM-DC.git).
+- Paste the following url: [https://github.com/kyh57363/ML4DQMDC-PixelAE.git](https://github.com/kyh57363/ML4DQMDC-PixelAE.git).
 
 #### (alternative method):  
 
